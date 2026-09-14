@@ -24,32 +24,45 @@
         </button>
       }
     </div>
-    <mat-nav-list>
-      <a
-        mat-list-item
-        routerLink="/dashboard"
-        routerLinkActive="active-link"
-        [matTooltip]="collapsed() ? 'Dashboard' : ''"
-        matTooltipPosition="right"
-      >
-        <mat-icon matListItemIcon>bar_chart</mat-icon>
-        @if (!collapsed()) {
+    @if (!collapsed()) {
+      <mat-nav-list>
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>bar_chart</mat-icon>
           <span matListItemTitle>Dashboard</span>
-        }
-      </a>
-      <a
-        mat-list-item
-        routerLink="/patients"
-        routerLinkActive="active-link"
-        [matTooltip]="collapsed() ? 'Patients' : ''"
-        matTooltipPosition="right"
-      >
-        <mat-icon matListItemIcon>groups</mat-icon>
-        @if (!collapsed()) {
+        </a>
+        <a mat-list-item routerLink="/patients" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>groups</mat-icon>
           <span matListItemTitle>Patients</span>
-        }
-      </a>
-    </mat-nav-list>
+        </a>
+      </mat-nav-list>
+    } @else {
+      <!-- Collapsed: plain icon buttons instead of mat-list-item. Icon
+           buttons are built to center a single icon with symmetric padding,
+           sidestepping mat-list-item's icon+text layout (asymmetric margins,
+           an always-present content wrapper) entirely. -->
+      <div class="collapsed-nav">
+        <a
+          mat-icon-button
+          routerLink="/dashboard"
+          routerLinkActive="active-icon"
+          matTooltip="Dashboard"
+          matTooltipPosition="right"
+          aria-label="Dashboard"
+        >
+          <mat-icon>bar_chart</mat-icon>
+        </a>
+        <a
+          mat-icon-button
+          routerLink="/patients"
+          routerLinkActive="active-icon"
+          matTooltip="Patients"
+          matTooltipPosition="right"
+          aria-label="Patients"
+        >
+          <mat-icon>groups</mat-icon>
+        </a>
+      </div>
+    }
   </mat-sidenav>
 
   <mat-sidenav-content>
