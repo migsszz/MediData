@@ -8,6 +8,17 @@ export class SupabaseService {
   readonly client: SupabaseClient;
   readonly session$ = new BehaviorSubject<Session | null>(null);
 
+  /**
+   * False until the initial getSession() call (which restores a persisted
+   * session from localStorage on page load) has resolved. Guards must wait
+   * for this instead of reading session$'s current value directly — on a
+   * hard refresh, that value starts out null regardless of whether a
+   * session is about to be restored, and racing ahead of it is what used
+   * to bounce a still-logged-in user back to /login.
+   */
+  private readonly readySubject = new BehaviorSubject(false);
+  readonly ready$ = this.readySubject.asObservable();
+
   private readonly sessionSignal = signal<Session | null>(null);
   readonly isAnonymous = computed(() => this.sessionSignal()?.user?.is_anonymous === true);
 
@@ -17,6 +28,7 @@ export class SupabaseService {
     this.client.auth.getSession().then(({ data }) => {
       this.session$.next(data.session);
       this.sessionSignal.set(data.session);
+      this.readySubject.next(true);
     });
 
     this.client.auth.onAuthStateChange((_event, session) => {
