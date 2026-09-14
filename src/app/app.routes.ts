@@ -1,11 +1,11 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
-import { ShellComponent } from './shared/layout/shell.component';
-import { LoginComponent } from './features/auth/login/login.component';
-import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { PatientListComponent } from './features/patients/patient-list/patient-list.component';
-import { PatientFormComponent } from './features/patients/patient-form/patient-form.component';
-import { PatientDetailComponent } from './features/patients/patient-detail/patient-detail.component';
+import { authGuard } from './guards/auth.guard';
+import { ShellComponent } from './components/layout/shell.component';
+import { LoginComponent } from './components/auth/login/login.component';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+import { PatientListComponent } from './components/patients/patient-list/patient-list.component';
+import { PatientFormComponent } from './components/patients/patient-form/patient-form.component';
+import { PatientDetailComponent } from './components/patients/patient-detail/patient-detail.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },

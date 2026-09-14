@@ -12,13 +12,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 
-import { PatientService } from '../../../core/services/patient.service';
-import { EncounterService } from '../../../core/services/encounter.service';
-import { MedicationService } from '../../../core/services/medication.service';
-import { SupabaseService } from '../../../core/services/supabase.service';
-import { Patient } from '../../../core/models/patient.model';
-import { Encounter } from '../../../core/models/encounter.model';
-import { Medication } from '../../../core/models/medication.model';
+import { PatientService } from '../../../services/patient.service';
+import { EncounterService } from '../../../services/encounter.service';
+import { MedicationService } from '../../../services/medication.service';
+import { SupabaseService } from '../../../services/supabase.service';
+import { Patient } from '../../../models/patient.model';
+import { Encounter } from '../../../models/encounter.model';
+import { Medication } from '../../../models/medication.model';
 
 function ageFromDob(dob: string): number {
   const birth = new Date(dob);

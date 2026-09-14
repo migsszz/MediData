@@ -7,8 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { SupabaseService } from '../../../core/services/supabase.service';
-import { DemoDataService } from '../../../core/services/demo-data.service';
+import { SupabaseService } from '../../../services/supabase.service';
+import { DemoDataService } from '../../../services/demo-data.service';
 
 @Component({
   selector: 'app-login',

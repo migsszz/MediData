@@ -7,8 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PatientService } from '../../../core/services/patient.service';
-import { Patient } from '../../../core/models/patient.model';
+import { PatientService } from '../../../services/patient.service';
+import { Patient } from '../../../models/patient.model';
 
 @Component({
   selector: 'app-patient-list',

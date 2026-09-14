@@ -5,10 +5,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { forkJoin } from 'rxjs';
-import { PatientService } from '../../core/services/patient.service';
-import { EncounterService } from '../../core/services/encounter.service';
-import { Patient } from '../../core/models/patient.model';
-import { Encounter } from '../../core/models/encounter.model';
+import { PatientService } from '../../services/patient.service';
+import { EncounterService } from '../../services/encounter.service';
+import { Patient } from '../../models/patient.model';
+import { Encounter } from '../../models/encounter.model';
 
 function ageFromDob(dob: string): number {
   const birth = new Date(dob);
