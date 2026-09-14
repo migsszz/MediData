@@ -6,10 +6,14 @@
   width: 240px;
   transition: width 0.2s ease;
   overflow-x: hidden;
-  border-right: 1px solid var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface-container);
 
   &.collapsed {
     width: 72px;
+
+    a[mat-list-item] {
+      justify-content: center;
+    }
   }
 }
 
@@ -29,6 +33,12 @@
 
 .collapse-toggle {
   flex-shrink: 0;
+}
+
+mat-nav-list a[mat-list-item] {
+  margin: 2px 8px;
+  border-radius: 8px;
+  width: auto;
 }
 
 .active-link {
