@@ -84,7 +84,7 @@ export class DemoDataService {
 
   /** Seeds a small, self-contained patient/encounter/medication dataset owned by the given (anonymous) user. */
   seedDemoData(userId: string) {
-    const patients = DEMO_PATIENTS.map((p) => ({ ...p, created_by: userId }));
+    const patients = DEMO_PATIENTS.map((p) => ({ ...p, created_by: userId, is_seed: true }));
 
     return from(
       this.supabase.client.from('patients').insert(patients).select().then(({ data, error }) => {
@@ -128,8 +128,8 @@ export class DemoDataService {
           }
         });
 
-        const encountersWithOwner = encounters.map((e) => ({ ...e, created_by: userId }));
-        const medicationsWithOwner = medications.map((m) => ({ ...m, created_by: userId }));
+        const encountersWithOwner = encounters.map((e) => ({ ...e, created_by: userId, is_seed: true }));
+        const medicationsWithOwner = medications.map((m) => ({ ...m, created_by: userId, is_seed: true }));
 
         return from(
           Promise.all([
@@ -140,6 +140,42 @@ export class DemoDataService {
             if (medRes.error) throw medRes.error;
           })
         );
+      })
+    );
+  }
+
+  /** True if the user has created any patient themselves (i.e. beyond the seeded demo set). */
+  hasNonSeedPatients(userId: string) {
+    return from(
+      this.supabase.client
+        .from('patients')
+        .select('id', { count: 'exact', head: true })
+        .eq('created_by', userId)
+        .eq('is_seed', false)
+        .then(({ count, error }) => {
+          if (error) throw error;
+          return (count ?? 0) > 0;
+        })
+    );
+  }
+
+  /**
+   * Called right after a guest upgrades to a full account. Seeded demo rows
+   * never carry over — they're always deleted. Rows the guest created
+   * themselves are kept unless the user chose to discard them too (deleting
+   * a patient cascades to its own encounters/medications regardless of
+   * their individual is_seed flag, since they can't meaningfully outlive
+   * the patient they belong to).
+   */
+  cleanupAfterUpgrade(userId: string, keepUserCreatedData: boolean) {
+    let query = this.supabase.client.from('patients').delete().eq('created_by', userId);
+    if (keepUserCreatedData) {
+      query = query.eq('is_seed', true);
+    }
+
+    return from(
+      query.then(({ error }) => {
+        if (error) throw error;
       })
     );
   }
