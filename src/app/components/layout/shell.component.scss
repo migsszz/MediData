@@ -10,27 +10,20 @@
 
   &.collapsed {
     width: 72px;
-
-    a[mat-list-item] {
-      justify-content: center;
-
-      // Material's list-item template always renders a `.mdc-list-item__content`
-      // wrapper (with `flex: 1`) even when there's no title projected into it —
-      // left in place, it soaks up all the free space and defeats
-      // `justify-content: center` above, since there's nothing left to center.
-      ::ng-deep .mdc-list-item__content {
-        display: none;
-      }
-
-      // The icon itself also ships with an asymmetric margin (16px left,
-      // 32px right — space reserved for text that isn't there anymore),
-      // which would still visually shift it left of center even with the
-      // content wrapper gone.
-      ::ng-deep .mdc-list-item__start {
-        margin: 0;
-      }
-    }
   }
+}
+
+.collapsed-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.active-icon {
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-primary);
 }
 
 .sidenav-header {
