@@ -1,17 +1,24 @@
 -- MediData schema
 -- Run this in the Supabase SQL editor (Project > SQL Editor > New query).
 --
--- Two kinds of Supabase Auth users hit these tables:
---   - Real (non-anonymous) users: staff accounts. Every real user can
---     read/write every record (single shared clinic workspace). Tighten
---     the policies below if you need per-clinician data isolation.
---   - Anonymous users (Supabase's signInAnonymously): guests trying the
---     demo. Each guest is scoped to only the rows they created
---     (created_by = auth.uid()), so demo sessions can never see or touch
---     real patient data or each other's demo data. This requires
---     "Allow anonymous sign-ins" to be enabled for the project
---     (Authentication > Sign In / Providers, or `enable_anonymous_sign_ins`
---     in supabase/config.toml for local dev).
+-- Data is isolated per practitioner: every authenticated user (real
+-- practitioner or anonymous guest alike) can only see and modify the
+-- patients/encounters/medications they themselves created
+-- (created_by = auth.uid()). A practitioner can't see another
+-- practitioner's patients, and no one can see guest demo data or vice
+-- versa — there is currently no shared/clinic-wide visibility at all.
+--
+-- Guests (Supabase's signInAnonymously(), used by the "Try the demo"
+-- button) work the same way: they get their own created_by, so their
+-- seeded demo rows are automatically isolated like anyone else's data.
+-- This requires "Allow anonymous sign-ins" to be enabled for the project
+-- (Authentication > Sign In / Providers, or `enable_anonymous_sign_ins`
+-- in supabase/config.toml for local dev).
+--
+-- NOTE: this relies on created_by always being set by the app on insert.
+-- Any pre-existing row with a null created_by (e.g. from before this
+-- policy existed) becomes invisible to everyone under these policies —
+-- back-fill created_by for those rows manually if you have any.
 
 create extension if not exists "pgcrypto";
 
@@ -65,25 +72,12 @@ create table if not exists medications (
 create index if not exists encounters_patient_id_idx on encounters (patient_id);
 create index if not exists medications_patient_id_idx on medications (patient_id);
 
--- True for guest/demo sessions created via supabase.auth.signInAnonymously().
--- Supabase stamps `is_anonymous` on the JWT for these sessions; real users
--- (including ones upgraded from a guest session via updateUser) don't have
--- it set to true.
-create or replace function public.is_guest()
-returns boolean
-language sql
-stable
-as $$
-  select coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false);
-$$;
-
 alter table patients enable row level security;
 alter table encounters enable row level security;
 alter table medications enable row level security;
 
--- Drop the original (pre-guest-mode) permissive policies if this script was
--- run before — otherwise they'd keep granting guests full access alongside
--- the new restricted ones below.
+-- Drop every policy name used by earlier versions of this script, so it
+-- stays safely re-runnable regardless of which version you last applied.
 drop policy if exists "Authenticated users can read patients" on patients;
 drop policy if exists "Authenticated users can insert patients" on patients;
 drop policy if exists "Authenticated users can update patients" on patients;
@@ -97,9 +91,6 @@ drop policy if exists "Authenticated users can insert medications" on medication
 drop policy if exists "Authenticated users can update medications" on medications;
 drop policy if exists "Authenticated users can delete medications" on medications;
 
--- Also drop-and-recreate the current policies, so this script stays
--- re-runnable (e.g. after pulling schema changes) instead of erroring on
--- "policy already exists".
 drop policy if exists "Read patients: staff see all, guests see their own" on patients;
 drop policy if exists "Insert patients: guests must own the row" on patients;
 drop policy if exists "Update patients: staff update all, guests their own" on patients;
@@ -113,62 +104,79 @@ drop policy if exists "Insert medications: guests must own the row" on medicatio
 drop policy if exists "Update medications: staff update all, guests their own" on medications;
 drop policy if exists "Delete medications: staff delete all, guests their own" on medications;
 
-create policy "Read patients: staff see all, guests see their own"
+-- The old staff/guest split relied on this to grant staff full access; no
+-- longer needed now that every user (staff or guest) is scoped the same way.
+drop function if exists public.is_guest();
+
+drop policy if exists "Users can read their own patients" on patients;
+drop policy if exists "Users can insert their own patients" on patients;
+drop policy if exists "Users can update their own patients" on patients;
+drop policy if exists "Users can delete their own patients" on patients;
+drop policy if exists "Users can read their own encounters" on encounters;
+drop policy if exists "Users can insert their own encounters" on encounters;
+drop policy if exists "Users can update their own encounters" on encounters;
+drop policy if exists "Users can delete their own encounters" on encounters;
+drop policy if exists "Users can read their own medications" on medications;
+drop policy if exists "Users can insert their own medications" on medications;
+drop policy if exists "Users can update their own medications" on medications;
+drop policy if exists "Users can delete their own medications" on medications;
+
+create policy "Users can read their own patients"
   on patients for select
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Insert patients: guests must own the row"
+create policy "Users can insert their own patients"
   on patients for insert
   to authenticated
-  with check (not public.is_guest() or created_by = auth.uid());
+  with check (created_by = auth.uid());
 
-create policy "Update patients: staff update all, guests their own"
+create policy "Users can update their own patients"
   on patients for update
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Delete patients: staff delete all, guests their own"
+create policy "Users can delete their own patients"
   on patients for delete
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Read encounters: staff see all, guests see their own"
+create policy "Users can read their own encounters"
   on encounters for select
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Insert encounters: guests must own the row"
+create policy "Users can insert their own encounters"
   on encounters for insert
   to authenticated
-  with check (not public.is_guest() or created_by = auth.uid());
+  with check (created_by = auth.uid());
 
-create policy "Update encounters: staff update all, guests their own"
+create policy "Users can update their own encounters"
   on encounters for update
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Delete encounters: staff delete all, guests their own"
+create policy "Users can delete their own encounters"
   on encounters for delete
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Read medications: staff see all, guests see their own"
+create policy "Users can read their own medications"
   on medications for select
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Insert medications: guests must own the row"
+create policy "Users can insert their own medications"
   on medications for insert
   to authenticated
-  with check (not public.is_guest() or created_by = auth.uid());
+  with check (created_by = auth.uid());
 
-create policy "Update medications: staff update all, guests their own"
+create policy "Users can update their own medications"
   on medications for update
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
 
-create policy "Delete medications: staff delete all, guests their own"
+create policy "Users can delete their own medications"
   on medications for delete
   to authenticated
-  using (not public.is_guest() or created_by = auth.uid());
+  using (created_by = auth.uid());
