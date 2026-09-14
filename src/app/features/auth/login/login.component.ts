@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { DemoDataService } from '../../../core/services/demo-data.service';
 
 @Component({
   selector: 'app-login',
@@ -26,9 +27,11 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
+  private demoData = inject(DemoDataService);
   private router = inject(Router);
 
   loading = signal(false);
+  demoLoading = signal(false);
   errorMessage = signal<string | null>(null);
   mode = signal<'signin' | 'signup'>('signin');
 
@@ -67,5 +70,29 @@ export class LoginComponent {
       this.errorMessage.set('Check your email to confirm your account, then sign in.');
       this.mode.set('signin');
     }
+  }
+
+  async tryDemo() {
+    this.demoLoading.set(true);
+    this.errorMessage.set(null);
+
+    const { data, error } = await this.supabase.signInAnonymously();
+
+    if (error || !data.user) {
+      this.demoLoading.set(false);
+      this.errorMessage.set(error?.message ?? 'Demo mode is not available right now.');
+      return;
+    }
+
+    this.demoData.seedDemoData(data.user.id).subscribe({
+      next: () => {
+        this.demoLoading.set(false);
+        this.router.navigateByUrl('/dashboard');
+      },
+      error: (err) => {
+        this.demoLoading.set(false);
+        this.errorMessage.set(err?.message ?? 'Could not set up demo data.');
+      }
+    });
   }
 }

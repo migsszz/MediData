@@ -74,7 +74,15 @@
       </button>
     </mat-toolbar>
 
-    <main class="content">
+    @if (isAnonymous()) {
+      <div class="guest-banner">
+        <mat-icon>info</mat-icon>
+        <span>You're exploring a demo — your data here is private to this session.</span>
+        <button mat-flat-button color="primary" (click)="openUpgradeDialog()">Upgrade to full account</button>
+      </div>
+    }
+
+    <main class="content" [class.expanded]="!(isHandset$ | async) && collapsed()">
       <router-outlet></router-outlet>
     </main>
   </mat-sidenav-content>

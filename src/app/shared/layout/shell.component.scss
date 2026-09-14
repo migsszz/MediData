@@ -42,12 +42,31 @@
   flex: 1 1 auto;
 }
 
+.guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--mat-sys-tertiary-container);
+  color: var(--mat-sys-on-tertiary-container);
+
+  span {
+    flex: 1 1 auto;
+  }
+}
+
 .content {
   padding: 16px;
   max-width: 1200px;
   margin: 0 auto;
+  transition: max-width 0.2s ease;
 
   @media (min-width: 600px) {
     padding: 24px;
+  }
+
+  &.expanded {
+    max-width: 1400px;
   }
 }

@@ -129,7 +129,8 @@ export class PatientDetailComponent implements OnInit {
     this.encounterService
       .create({
         ...(this.encounterForm.getRawValue() as any),
-        patient_id: this.patientId
+        patient_id: this.patientId,
+        created_by: this.supabase.currentSession?.user.id ?? null
       })
       .subscribe({
         next: () => {
@@ -160,7 +161,8 @@ export class PatientDetailComponent implements OnInit {
     this.medicationService
       .create({
         ...(this.medicationForm.getRawValue() as any),
-        patient_id: this.patientId
+        patient_id: this.patientId,
+        created_by: this.supabase.currentSession?.user.id ?? null
       })
       .subscribe({
         next: () => {
