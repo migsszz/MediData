@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+@plugin 'daisyui' {
+  themes: false;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'medidata-light';
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f3f4f8;
+  --color-base-300: #e5e7ee;
+  --color-base-content: #1c1e26;
+  --color-primary: #2563eb;
+  --color-primary-content: #ffffff;
+  --color-secondary: #0d9488;
+  --color-secondary-content: #ffffff;
+  --color-accent: #7c3aed;
+  --color-accent-content: #ffffff;
+  --color-neutral: #374151;
+  --color-neutral-content: #f9fafb;
+  --color-info: #0284c7;
+  --color-info-content: #ffffff;
+  --color-success: #16a34a;
+  --color-success-content: #ffffff;
+  --color-warning: #d97706;
+  --color-warning-content: #1c1e26;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+
+  --radius-box: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-selector: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'medidata-dark';
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #14161f;
+  --color-base-200: #1b1e29;
+  --color-base-300: #262a38;
+  --color-base-content: #e5e7ee;
+  --color-primary: #60a5fa;
+  --color-primary-content: #0b1220;
+  --color-secondary: #2dd4bf;
+  --color-secondary-content: #0b1220;
+  --color-accent: #a78bfa;
+  --color-accent-content: #0b1220;
+  --color-neutral: #9ca3af;
+  --color-neutral-content: #14161f;
+  --color-info: #38bdf8;
+  --color-info-content: #0b1220;
+  --color-success: #4ade80;
+  --color-success-content: #0b1220;
+  --color-warning: #fbbf24;
+  --color-warning-content: #0b1220;
+  --color-error: #f87171;
+  --color-error-content: #0b1220;
+
+  --radius-box: 0.75rem;
+  --radius-field: 0.5rem;
+  --radius-selector: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}

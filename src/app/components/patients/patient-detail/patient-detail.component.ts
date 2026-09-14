@@ -1,16 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatExpansionModule } from '@angular/material/expansion';
 
 import { PatientService } from '../../../services/patient.service';
 import { EncounterService } from '../../../services/encounter.service';
@@ -34,23 +25,8 @@ function ageFromDob(dob: string): number {
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    DatePipe,
-    ReactiveFormsModule,
-    RouterLink,
-    MatCardModule,
-    MatTabsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatExpansionModule
-  ],
-  templateUrl: './patient-detail.component.html',
-  styleUrl: './patient-detail.component.scss'
+  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  templateUrl: './patient-detail.component.html'
 })
 export class PatientDetailComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -66,6 +42,10 @@ export class PatientDetailComponent implements OnInit {
   loading = signal(true);
   savingEncounter = signal(false);
   savingMedication = signal(false);
+
+  activeTab = signal<'encounters' | 'medications'>('encounters');
+  showEncounterForm = signal(false);
+  showMedicationForm = signal(false);
 
   encounterForm = this.fb.group({
     visit_date: [new Date().toISOString().slice(0, 10), Validators.required],
@@ -89,7 +69,6 @@ export class PatientDetailComponent implements OnInit {
     end_date: [null as string | null],
     active: [true]
   });
-
 
   get patientId(): string {
     return this.route.snapshot.paramMap.get('id')!;
@@ -135,6 +114,7 @@ export class PatientDetailComponent implements OnInit {
       .subscribe({
         next: () => {
           this.savingEncounter.set(false);
+          this.showEncounterForm.set(false);
           this.encounterForm.reset({
             visit_date: new Date().toISOString().slice(0, 10),
             reason: '',
@@ -167,6 +147,7 @@ export class PatientDetailComponent implements OnInit {
       .subscribe({
         next: () => {
           this.savingMedication.set(false);
+          this.showMedicationForm.set(false);
           this.medicationForm.reset({
             name: '',
             dosage: '',

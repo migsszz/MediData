@@ -1,218 +1,246 @@
 @if (loading()) {
-  <div class="loading">
-    <mat-spinner diameter="32"></mat-spinner>
+  <div class="flex justify-center py-12">
+    <span class="loading loading-spinner loading-lg"></span>
   </div>
 } @else if (patient()) {
   @let p = patient()!;
-  <div class="page-header">
+  <div class="flex items-start justify-between flex-wrap gap-3 mb-4">
     <div>
-      <h1>{{ p.first_name }} {{ p.last_name }}</h1>
-      <p class="subtitle">{{ age }} years old &middot; {{ p.sex }} &middot; DOB {{ p.date_of_birth | date: 'mediumDate' }}</p>
+      <h1 class="text-2xl font-bold">{{ p.first_name }} {{ p.last_name }}</h1>
+      <p class="text-base-content/60 mt-1">
+        {{ age }} years old &middot; {{ p.sex }} &middot; DOB {{ p.date_of_birth | date: 'mediumDate' }}
+      </p>
     </div>
-    <a mat-stroked-button [routerLink]="['/patients', p.id, 'edit']">
-      <mat-icon>edit</mat-icon>
+    <a class="btn btn-outline" [routerLink]="['/patients', p.id, 'edit']">
+      <span class="material-icons text-lg">edit</span>
       Edit
     </a>
   </div>
 
-  <mat-card class="info-card">
-    <div class="info-grid">
-      <div><span class="label">Phone</span>{{ p.phone || '—' }}</div>
-      <div><span class="label">Email</span>{{ p.email || '—' }}</div>
-      <div><span class="label">Blood type</span>{{ p.blood_type || '—' }}</div>
-      <div><span class="label">Address</span>{{ p.address || '—' }}</div>
-      <div class="span-2"><span class="label">Allergies</span>{{ p.allergies || 'None recorded' }}</div>
-      @if (p.notes) {
-        <div class="span-2"><span class="label">Notes</span>{{ p.notes }}</div>
-      }
+  <div class="card bg-base-100 shadow mb-4">
+    <div class="card-body">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+        <div><span class="block text-xs uppercase text-base-content/50">Phone</span>{{ p.phone || '—' }}</div>
+        <div><span class="block text-xs uppercase text-base-content/50">Email</span>{{ p.email || '—' }}</div>
+        <div><span class="block text-xs uppercase text-base-content/50">Blood type</span>{{ p.blood_type || '—' }}</div>
+        <div><span class="block text-xs uppercase text-base-content/50">Address</span>{{ p.address || '—' }}</div>
+        <div class="sm:col-span-2">
+          <span class="block text-xs uppercase text-base-content/50">Allergies</span>{{ p.allergies || 'None recorded' }}
+        </div>
+        @if (p.notes) {
+          <div class="sm:col-span-2">
+            <span class="block text-xs uppercase text-base-content/50">Notes</span>{{ p.notes }}
+          </div>
+        }
+      </div>
     </div>
-  </mat-card>
+  </div>
 
-  <mat-tab-group class="tabs">
-    <mat-tab label="Encounters">
-      <div class="tab-content">
-        <mat-expansion-panel class="add-panel">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>add</mat-icon>&nbsp; New encounter
-            </mat-panel-title>
-          </mat-expansion-panel-header>
+  <div role="tablist" class="tabs tabs-lift">
+    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'encounters'" (click)="activeTab.set('encounters')">
+      Encounters
+    </a>
+    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'medications'" (click)="activeTab.set('medications')">
+      Medications
+    </a>
+  </div>
 
+  <div class="py-4">
+    @if (activeTab() === 'encounters') {
+      <div class="collapse collapse-arrow bg-base-100 shadow mb-4" [class.collapse-open]="showEncounterForm()">
+        <div class="collapse-title font-medium cursor-pointer" (click)="showEncounterForm.set(!showEncounterForm())">
+          <span class="material-icons align-middle text-lg mr-1">add</span>
+          New encounter
+        </div>
+        <div class="collapse-content">
           <form [formGroup]="encounterForm" (ngSubmit)="addEncounter()">
-            <div class="grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Visit date</mat-label>
-                <input matInput type="date" formControlName="visit_date" />
-              </mat-form-field>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
+              <fieldset class="fieldset">
+                <label class="label">Visit date</label>
+                <input class="input w-full" type="date" formControlName="visit_date" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Reason for visit</mat-label>
-                <input matInput formControlName="reason" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Reason for visit</label>
+                <input class="input w-full" formControlName="reason" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Diagnosis</mat-label>
-                <input matInput formControlName="diagnosis" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Diagnosis</label>
+                <input class="input w-full" formControlName="diagnosis" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Systolic BP (mmHg)</mat-label>
-                <input matInput type="number" formControlName="blood_pressure_systolic" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Systolic BP (mmHg)</label>
+                <input class="input w-full" type="number" formControlName="blood_pressure_systolic" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Diastolic BP (mmHg)</mat-label>
-                <input matInput type="number" formControlName="blood_pressure_diastolic" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Diastolic BP (mmHg)</label>
+                <input class="input w-full" type="number" formControlName="blood_pressure_diastolic" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Heart rate (bpm)</mat-label>
-                <input matInput type="number" formControlName="heart_rate" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Heart rate (bpm)</label>
+                <input class="input w-full" type="number" formControlName="heart_rate" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Temperature (&deg;C)</mat-label>
-                <input matInput type="number" step="0.1" formControlName="temperature_c" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Temperature (&deg;C)</label>
+                <input class="input w-full" type="number" step="0.1" formControlName="temperature_c" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>SpO2 (%)</mat-label>
-                <input matInput type="number" formControlName="spo2" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">SpO2 (%)</label>
+                <input class="input w-full" type="number" formControlName="spo2" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Weight (kg)</mat-label>
-                <input matInput type="number" step="0.1" formControlName="weight_kg" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Weight (kg)</label>
+                <input class="input w-full" type="number" step="0.1" formControlName="weight_kg" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Height (cm)</mat-label>
-                <input matInput type="number" step="0.1" formControlName="height_cm" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Height (cm)</label>
+                <input class="input w-full" type="number" step="0.1" formControlName="height_cm" />
+              </fieldset>
 
-              <mat-form-field appearance="outline" class="span-2">
-                <mat-label>Notes</mat-label>
-                <textarea matInput formControlName="notes" rows="2"></textarea>
-              </mat-form-field>
+              <fieldset class="fieldset sm:col-span-2">
+                <label class="label">Notes</label>
+                <textarea class="textarea w-full" formControlName="notes" rows="2"></textarea>
+              </fieldset>
             </div>
 
-            <div class="actions">
-              <button mat-flat-button color="primary" type="submit" [disabled]="encounterForm.invalid || savingEncounter()">
+            <div class="flex justify-end mt-3">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="encounterForm.invalid || savingEncounter()"
+              >
                 {{ savingEncounter() ? 'Saving...' : 'Save encounter' }}
               </button>
             </div>
           </form>
-        </mat-expansion-panel>
+        </div>
+      </div>
 
-        @if (encounters().length === 0) {
-          <p class="empty">No encounters recorded yet.</p>
-        } @else {
-          <div class="timeline">
-            @for (e of encounters(); track e.id) {
-              <mat-card class="timeline-item">
-                <div class="timeline-header">
+      @if (encounters().length === 0) {
+        <p class="text-center text-base-content/60 py-8">No encounters recorded yet.</p>
+      } @else {
+        <div class="flex flex-col gap-3">
+          @for (e of encounters(); track e.id) {
+            <div class="card bg-base-100 shadow">
+              <div class="card-body p-4">
+                <div class="flex justify-between flex-wrap gap-2">
                   <strong>{{ e.visit_date | date: 'mediumDate' }}</strong>
-                  <span class="reason">{{ e.reason }}</span>
+                  <span class="text-base-content/60">{{ e.reason }}</span>
                 </div>
                 @if (e.diagnosis) {
-                  <p class="diagnosis">Diagnosis: {{ e.diagnosis }}</p>
+                  <p class="font-medium my-1">Diagnosis: {{ e.diagnosis }}</p>
                 }
-                <div class="vitals">
+                <div class="flex flex-wrap gap-2 my-1">
                   @if (e.blood_pressure_systolic && e.blood_pressure_diastolic) {
-                    <span class="vital-chip">BP {{ e.blood_pressure_systolic }}/{{ e.blood_pressure_diastolic }}</span>
+                    <span class="badge badge-soft">BP {{ e.blood_pressure_systolic }}/{{ e.blood_pressure_diastolic }}</span>
                   }
                   @if (e.heart_rate) {
-                    <span class="vital-chip">HR {{ e.heart_rate }} bpm</span>
+                    <span class="badge badge-soft">HR {{ e.heart_rate }} bpm</span>
                   }
                   @if (e.temperature_c) {
-                    <span class="vital-chip">{{ e.temperature_c }}&deg;C</span>
+                    <span class="badge badge-soft">{{ e.temperature_c }}&deg;C</span>
                   }
                   @if (e.spo2) {
-                    <span class="vital-chip">SpO2 {{ e.spo2 }}%</span>
+                    <span class="badge badge-soft">SpO2 {{ e.spo2 }}%</span>
                   }
                   @if (e.weight_kg) {
-                    <span class="vital-chip">{{ e.weight_kg }} kg</span>
+                    <span class="badge badge-soft">{{ e.weight_kg }} kg</span>
                   }
                   @if (e.height_cm) {
-                    <span class="vital-chip">{{ e.height_cm }} cm</span>
+                    <span class="badge badge-soft">{{ e.height_cm }} cm</span>
                   }
                 </div>
                 @if (e.notes) {
-                  <p class="notes">{{ e.notes }}</p>
+                  <p class="text-base-content/70 mt-1">{{ e.notes }}</p>
                 }
-              </mat-card>
-            }
-          </div>
-        }
-      </div>
-    </mat-tab>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
 
-    <mat-tab label="Medications">
-      <div class="tab-content">
-        <mat-expansion-panel class="add-panel">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <mat-icon>add</mat-icon>&nbsp; New medication
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-
+    @if (activeTab() === 'medications') {
+      <div class="collapse collapse-arrow bg-base-100 shadow mb-4" [class.collapse-open]="showMedicationForm()">
+        <div class="collapse-title font-medium cursor-pointer" (click)="showMedicationForm.set(!showMedicationForm())">
+          <span class="material-icons align-middle text-lg mr-1">add</span>
+          New medication
+        </div>
+        <div class="collapse-content">
           <form [formGroup]="medicationForm" (ngSubmit)="addMedication()">
-            <div class="grid">
-              <mat-form-field appearance="outline">
-                <mat-label>Name</mat-label>
-                <input matInput formControlName="name" />
-              </mat-form-field>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
+              <fieldset class="fieldset">
+                <label class="label">Name</label>
+                <input class="input w-full" formControlName="name" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Dosage</mat-label>
-                <input matInput formControlName="dosage" placeholder="e.g. 500mg" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Dosage</label>
+                <input class="input w-full" formControlName="dosage" placeholder="e.g. 500mg" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Frequency</mat-label>
-                <input matInput formControlName="frequency" placeholder="e.g. Twice daily" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Frequency</label>
+                <input class="input w-full" formControlName="frequency" placeholder="e.g. Twice daily" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>Start date</mat-label>
-                <input matInput type="date" formControlName="start_date" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">Start date</label>
+                <input class="input w-full" type="date" formControlName="start_date" />
+              </fieldset>
 
-              <mat-form-field appearance="outline">
-                <mat-label>End date</mat-label>
-                <input matInput type="date" formControlName="end_date" />
-              </mat-form-field>
+              <fieldset class="fieldset">
+                <label class="label">End date</label>
+                <input class="input w-full" type="date" formControlName="end_date" />
+              </fieldset>
             </div>
 
-            <div class="actions">
-              <button mat-flat-button color="primary" type="submit" [disabled]="medicationForm.invalid || savingMedication()">
+            <div class="flex justify-end mt-3">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="medicationForm.invalid || savingMedication()"
+              >
                 {{ savingMedication() ? 'Saving...' : 'Save medication' }}
               </button>
             </div>
           </form>
-        </mat-expansion-panel>
+        </div>
+      </div>
 
-        @if (medications().length === 0) {
-          <p class="empty">No medications recorded yet.</p>
-        } @else {
-          <div class="timeline">
-            @for (m of medications(); track m.id) {
-              <mat-card class="timeline-item">
-                <div class="timeline-header">
+      @if (medications().length === 0) {
+        <p class="text-center text-base-content/60 py-8">No medications recorded yet.</p>
+      } @else {
+        <div class="flex flex-col gap-3">
+          @for (m of medications(); track m.id) {
+            <div class="card bg-base-100 shadow">
+              <div class="card-body p-4">
+                <div class="flex justify-between flex-wrap gap-2">
                   <strong>{{ m.name }}</strong>
-                  <span class="reason">{{ m.dosage }} &middot; {{ m.frequency }}</span>
+                  <span class="text-base-content/60">{{ m.dosage }} &middot; {{ m.frequency }}</span>
                 </div>
-                <p class="notes">
-                  {{ m.start_date | date: 'mediumDate' }} — {{ m.end_date ? (m.end_date | date: 'mediumDate') : 'ongoing' }}
+                <p class="text-base-content/70 mt-1 flex items-center gap-2 flex-wrap">
+                  <span>
+                    {{ m.start_date | date: 'mediumDate' }} —
+                    {{ m.end_date ? (m.end_date | date: 'mediumDate') : 'ongoing' }}
+                  </span>
                   @if (m.active) {
-                    <span class="vital-chip active">Active</span>
+                    <span class="badge badge-success badge-soft">Active</span>
                   }
                 </p>
-              </mat-card>
-            }
-          </div>
-        }
-      </div>
-    </mat-tab>
-  </mat-tab-group>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
 }

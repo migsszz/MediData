@@ -4,7 +4,7 @@ A data entry app with analytics for medical records — patients, encounters (vi
 
 ## Stack
 
-- **Angular 21** (standalone components, signals) + **Angular Material** for UI
+- **Angular 21** (standalone components, signals) + **Tailwind CSS 4 / DaisyUI 5** for UI, with **Angular CDK** (Overlay, Dialog, A11y, BreakpointObserver) as the unstyled behavior layer for the dialog and mobile drawer
 - **Angular Service Worker** for PWA/offline shell support
 - **Supabase** (Postgres + Auth) as the backend
 - **ng2-charts / Chart.js** for the analytics dashboard
@@ -44,6 +44,10 @@ npx supabase start
 ## Dashboard
 
 The dashboard aggregates all patients/encounters into: total patients, encounters this month, average patient age, encounters over the last 6 months, patient sex distribution, and top diagnoses.
+
+## Theming
+
+Light/dark themes are defined as custom DaisyUI themes (`medidata-light` / `medidata-dark`) in [`src/styles.css`](src/styles.css). `ThemeService` toggles the `data-theme` attribute on `<html>` and persists the choice to `localStorage`, defaulting to the OS preference on first visit. To restyle the app, edit the `--color-*` (and `--radius-*`) values in those two `@plugin 'daisyui/theme'` blocks — every component reads from them automatically.
 
 ## Notes
 
