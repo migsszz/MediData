@@ -6,6 +6,7 @@
   width: 240px;
   transition: width 0.2s ease;
   overflow-x: hidden;
+  border-right: 1px solid var(--mat-sys-outline-variant);
 
   &.collapsed {
     width: 72px;
@@ -32,10 +33,6 @@
 
 .active-link {
   background: var(--mat-sys-surface-container-highest);
-}
-
-.toolbar-title {
-  margin-left: 8px;
 }
 
 .spacer {
@@ -67,6 +64,6 @@
   }
 
   &.expanded {
-    max-width: 1400px;
+    max-width: none;
   }
 }
