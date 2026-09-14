@@ -13,6 +13,14 @@
 
     a[mat-list-item] {
       justify-content: center;
+
+      // Material's list-item template always renders a `.mdc-list-item__content`
+      // wrapper (with `flex: 1`) even when there's no title projected into it —
+      // left in place, it soaks up all the free space and defeats
+      // `justify-content: center` above, since there's nothing left to center.
+      ::ng-deep .mdc-list-item__content {
+        display: none;
+      }
     }
   }
 }
