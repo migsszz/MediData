@@ -1,0 +1,81 @@
+<mat-sidenav-container class="app-container">
+  <mat-sidenav
+    #drawer
+    class="app-sidenav"
+    [class.collapsed]="!(isHandset$ | async) && collapsed()"
+    [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
+    [mode]="(isHandset$ | async) ? 'over' : 'side'"
+    [opened]="(isHandset$ | async) === false"
+  >
+    <div class="sidenav-header">
+      @if (!collapsed()) {
+        <div class="brand">MediData</div>
+      }
+      @if (!(isHandset$ | async)) {
+        <button
+          mat-icon-button
+          class="collapse-toggle"
+          (click)="toggleCollapsed()"
+          [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+          [matTooltip]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+          matTooltipPosition="right"
+        >
+          <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+        </button>
+      }
+    </div>
+    <mat-nav-list>
+      <a
+        mat-list-item
+        routerLink="/dashboard"
+        routerLinkActive="active-link"
+        [matTooltip]="collapsed() ? 'Dashboard' : ''"
+        matTooltipPosition="right"
+      >
+        <mat-icon matListItemIcon>bar_chart</mat-icon>
+        @if (!collapsed()) {
+          <span matListItemTitle>Dashboard</span>
+        }
+      </a>
+      <a
+        mat-list-item
+        routerLink="/patients"
+        routerLinkActive="active-link"
+        [matTooltip]="collapsed() ? 'Patients' : ''"
+        matTooltipPosition="right"
+      >
+        <mat-icon matListItemIcon>groups</mat-icon>
+        @if (!collapsed()) {
+          <span matListItemTitle>Patients</span>
+        }
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      @if (isHandset$ | async) {
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle navigation">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <span class="toolbar-title">MediData</span>
+      <span class="spacer"></span>
+      <button
+        mat-icon-button
+        (click)="theme.toggle()"
+        [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        [title]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <button mat-icon-button (click)="signOut()" aria-label="Sign out" title="Sign out">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <main class="content">
+      <router-outlet></router-outlet>
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
