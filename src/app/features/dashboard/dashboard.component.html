@@ -1,0 +1,45 @@
+<h1>Dashboard</h1>
+
+@if (loading()) {
+  <div class="loading">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+} @else {
+  <div class="stat-row">
+    <mat-card class="stat-card">
+      <span class="stat-value">{{ totalPatients() }}</span>
+      <span class="stat-label">Total patients</span>
+    </mat-card>
+    <mat-card class="stat-card">
+      <span class="stat-value">{{ encountersThisMonth() }}</span>
+      <span class="stat-label">Encounters this month</span>
+    </mat-card>
+    <mat-card class="stat-card">
+      <span class="stat-value">{{ averageAge() }}</span>
+      <span class="stat-label">Average patient age</span>
+    </mat-card>
+  </div>
+
+  <div class="chart-grid">
+    <mat-card class="chart-card">
+      <h2>Encounters, last 6 months</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart [data]="encountersByMonthData()" type="bar" [options]="barOptions"></canvas>
+      </div>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <h2>Patients by sex</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart [data]="sexChartData()" type="pie" [options]="pieOptions"></canvas>
+      </div>
+    </mat-card>
+
+    <mat-card class="chart-card span-2">
+      <h2>Top diagnoses</h2>
+      <div class="chart-wrapper">
+        <canvas baseChart [data]="topDiagnosesData()" type="bar" [options]="horizontalBarOptions"></canvas>
+      </div>
+    </mat-card>
+  </div>
+}

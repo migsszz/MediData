@@ -1,0 +1,218 @@
+@if (loading()) {
+  <div class="loading">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+} @else if (patient()) {
+  @let p = patient()!;
+  <div class="page-header">
+    <div>
+      <h1>{{ p.first_name }} {{ p.last_name }}</h1>
+      <p class="subtitle">{{ age }} years old &middot; {{ p.sex }} &middot; DOB {{ p.date_of_birth | date: 'mediumDate' }}</p>
+    </div>
+    <a mat-stroked-button [routerLink]="['/patients', p.id, 'edit']">
+      <mat-icon>edit</mat-icon>
+      Edit
+    </a>
+  </div>
+
+  <mat-card class="info-card">
+    <div class="info-grid">
+      <div><span class="label">Phone</span>{{ p.phone || '—' }}</div>
+      <div><span class="label">Email</span>{{ p.email || '—' }}</div>
+      <div><span class="label">Blood type</span>{{ p.blood_type || '—' }}</div>
+      <div><span class="label">Address</span>{{ p.address || '—' }}</div>
+      <div class="span-2"><span class="label">Allergies</span>{{ p.allergies || 'None recorded' }}</div>
+      @if (p.notes) {
+        <div class="span-2"><span class="label">Notes</span>{{ p.notes }}</div>
+      }
+    </div>
+  </mat-card>
+
+  <mat-tab-group class="tabs">
+    <mat-tab label="Encounters">
+      <div class="tab-content">
+        <mat-expansion-panel class="add-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>add</mat-icon>&nbsp; New encounter
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <form [formGroup]="encounterForm" (ngSubmit)="addEncounter()">
+            <div class="grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Visit date</mat-label>
+                <input matInput type="date" formControlName="visit_date" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Reason for visit</mat-label>
+                <input matInput formControlName="reason" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Diagnosis</mat-label>
+                <input matInput formControlName="diagnosis" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Systolic BP (mmHg)</mat-label>
+                <input matInput type="number" formControlName="blood_pressure_systolic" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Diastolic BP (mmHg)</mat-label>
+                <input matInput type="number" formControlName="blood_pressure_diastolic" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Heart rate (bpm)</mat-label>
+                <input matInput type="number" formControlName="heart_rate" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Temperature (&deg;C)</mat-label>
+                <input matInput type="number" step="0.1" formControlName="temperature_c" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>SpO2 (%)</mat-label>
+                <input matInput type="number" formControlName="spo2" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Weight (kg)</mat-label>
+                <input matInput type="number" step="0.1" formControlName="weight_kg" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Height (cm)</mat-label>
+                <input matInput type="number" step="0.1" formControlName="height_cm" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="span-2">
+                <mat-label>Notes</mat-label>
+                <textarea matInput formControlName="notes" rows="2"></textarea>
+              </mat-form-field>
+            </div>
+
+            <div class="actions">
+              <button mat-flat-button color="primary" type="submit" [disabled]="encounterForm.invalid || savingEncounter()">
+                {{ savingEncounter() ? 'Saving...' : 'Save encounter' }}
+              </button>
+            </div>
+          </form>
+        </mat-expansion-panel>
+
+        @if (encounters().length === 0) {
+          <p class="empty">No encounters recorded yet.</p>
+        } @else {
+          <div class="timeline">
+            @for (e of encounters(); track e.id) {
+              <mat-card class="timeline-item">
+                <div class="timeline-header">
+                  <strong>{{ e.visit_date | date: 'mediumDate' }}</strong>
+                  <span class="reason">{{ e.reason }}</span>
+                </div>
+                @if (e.diagnosis) {
+                  <p class="diagnosis">Diagnosis: {{ e.diagnosis }}</p>
+                }
+                <div class="vitals">
+                  @if (e.blood_pressure_systolic && e.blood_pressure_diastolic) {
+                    <span class="vital-chip">BP {{ e.blood_pressure_systolic }}/{{ e.blood_pressure_diastolic }}</span>
+                  }
+                  @if (e.heart_rate) {
+                    <span class="vital-chip">HR {{ e.heart_rate }} bpm</span>
+                  }
+                  @if (e.temperature_c) {
+                    <span class="vital-chip">{{ e.temperature_c }}&deg;C</span>
+                  }
+                  @if (e.spo2) {
+                    <span class="vital-chip">SpO2 {{ e.spo2 }}%</span>
+                  }
+                  @if (e.weight_kg) {
+                    <span class="vital-chip">{{ e.weight_kg }} kg</span>
+                  }
+                  @if (e.height_cm) {
+                    <span class="vital-chip">{{ e.height_cm }} cm</span>
+                  }
+                </div>
+                @if (e.notes) {
+                  <p class="notes">{{ e.notes }}</p>
+                }
+              </mat-card>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Medications">
+      <div class="tab-content">
+        <mat-expansion-panel class="add-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              <mat-icon>add</mat-icon>&nbsp; New medication
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <form [formGroup]="medicationForm" (ngSubmit)="addMedication()">
+            <div class="grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Dosage</mat-label>
+                <input matInput formControlName="dosage" placeholder="e.g. 500mg" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Frequency</mat-label>
+                <input matInput formControlName="frequency" placeholder="e.g. Twice daily" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Start date</mat-label>
+                <input matInput type="date" formControlName="start_date" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>End date</mat-label>
+                <input matInput type="date" formControlName="end_date" />
+              </mat-form-field>
+            </div>
+
+            <div class="actions">
+              <button mat-flat-button color="primary" type="submit" [disabled]="medicationForm.invalid || savingMedication()">
+                {{ savingMedication() ? 'Saving...' : 'Save medication' }}
+              </button>
+            </div>
+          </form>
+        </mat-expansion-panel>
+
+        @if (medications().length === 0) {
+          <p class="empty">No medications recorded yet.</p>
+        } @else {
+          <div class="timeline">
+            @for (m of medications(); track m.id) {
+              <mat-card class="timeline-item">
+                <div class="timeline-header">
+                  <strong>{{ m.name }}</strong>
+                  <span class="reason">{{ m.dosage }} &middot; {{ m.frequency }}</span>
+                </div>
+                <p class="notes">
+                  {{ m.start_date | date: 'mediumDate' }} — {{ m.end_date ? (m.end_date | date: 'mediumDate') : 'ongoing' }}
+                  @if (m.active) {
+                    <span class="vital-chip active">Active</span>
+                  }
+                </p>
+              </mat-card>
+            }
+          </div>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+}

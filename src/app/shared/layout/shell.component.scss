@@ -1,0 +1,53 @@
+.app-container {
+  height: 100vh;
+}
+
+.app-sidenav {
+  width: 240px;
+  transition: width 0.2s ease;
+  overflow-x: hidden;
+
+  &.collapsed {
+    width: 72px;
+  }
+}
+
+.sidenav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 0 8px 0 16px;
+}
+
+.brand {
+  font-size: 1.25rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.collapse-toggle {
+  flex-shrink: 0;
+}
+
+.active-link {
+  background: var(--mat-sys-surface-container-highest);
+}
+
+.toolbar-title {
+  margin-left: 8px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.content {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (min-width: 600px) {
+    padding: 24px;
+  }
+}
