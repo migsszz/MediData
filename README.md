@@ -47,5 +47,5 @@ The dashboard aggregates all patients/encounters into: total patients, encounter
 
 ## Notes
 
-- Auth policy: any real (non-anonymous) signed-in user can read/write everything (a shared clinic workspace); anonymous/guest sessions are restricted to rows they created. If you need per-clinician data isolation for real users too, tighten the RLS policies in `supabase/schema.sql` further.
+- Auth policy: data is isolated per practitioner. Every signed-in user (real or guest) can only see and modify the patients/encounters/medications they themselves created (`created_by = auth.uid()`) — no shared/clinic-wide visibility between practitioners for now, and guests stay separated from everyone else the same way.
 - Requires Node.js 20.19+, 22.12+, or 24+ (Angular CLI 21). If your system Node is older, this repo ships a project-scoped Node runtime — see [`.tools/README.md`](.tools/README.md) and use `./dev.ps1` instead of `npm`/`ng` directly (e.g. `./dev.ps1` for `npm start`, `./dev.ps1 run build`).
