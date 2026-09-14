@@ -12,7 +12,7 @@ A data entry app with analytics for medical records — patients, encounters (vi
 ## Setup
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql) to create the `patients`, `encounters`, and `medications` tables with row-level security enabled for authenticated users. This script is safe to re-run after future schema changes — it drops and recreates its own policies.
+2. In the Supabase SQL editor, run [`supabase/schema.sql`](supabase/schema.sql) to create the `patients`, `encounters`, and `medications` tables with row-level security enabled for authenticated users. This script is safe to re-run after future schema changes, it drops and recreates its own policies.
 3. To enable the guest/demo mode (see below), go to Authentication > Sign In / Providers and turn on **Allow anonymous sign-ins**. Skip this and "Try the demo" on the login page will just show an error — everything else still works.
 4. In Supabase's Project Settings > API, copy the **Project URL** and **anon public key**.
 5. Copy [`src/environments/environment.template.ts`](src/environments/environment.template.ts) to `environment.ts` and to `environment.prod.ts` (set `production: true` in the latter), then fill in your values. Both real files are gitignored since they hold your project's credentials.
@@ -33,25 +33,7 @@ Instead of a hosted Supabase project, you can run Postgres/Auth/Storage/Studio l
 npx supabase start
 ```
 
-`supabase/schema.sql` isn't applied automatically by `start` — either paste it into the local Studio SQL editor (default `http://127.0.0.1:54323`) or move it under `supabase/migrations/` and run `npx supabase db reset`. `supabase start` prints a local API URL (`http://127.0.0.1:54321`) and anon key — put those into `src/environments/environment.ts` instead of a hosted project's values. Stop it with `npx supabase stop`.
-
-## Guest / demo mode
-
-"Try the demo" on the login page starts a real but isolated Supabase session via `signInAnonymously()`, then seeds it with a small set of sample patients/encounters/medications. This isn't a fake client-side demo — guests hit the same backend and RLS as everyone else, but the policies in `supabase/schema.sql` restrict anonymous sessions (`auth.jwt() ->> 'is_anonymous'`) to only the rows they created, so a guest can never see or touch real patient data, and different guests can't see each other's demo data. Non-anonymous (real) users are unaffected — they keep full shared-workspace access.
-
-A banner appears whenever the current session is a guest, with an "Upgrade to full account" button that attaches an email + password to the same session via `supabase.auth.updateUser()` — this keeps all of the guest's demo data and converts it into a permanent account (subject to email confirmation if your project requires it).
-
-## Deploying to GitHub Pages
-
-[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds and deploys automatically on every push to `main`. One-time setup:
-
-1. **Make the repo public** (or have GitHub Pro/Team/Enterprise) — Pages on the free tier doesn't serve private repos.
-2. Repo Settings > Pages > Source: set to **GitHub Actions**.
-3. Repo Settings > Secrets and variables > Actions > add two repository secrets: `SUPABASE_URL` and `SUPABASE_ANON_KEY` (same values as your local `environment.ts`). The workflow writes these into `environment.prod.ts` at build time, since that file is gitignored and CI can't otherwise see it.
-4. In your Supabase project's Authentication > URL Configuration, add your Pages URL (`https://<username>.github.io/<repo>/`) to **Site URL** / **Redirect URLs** — otherwise email confirmation links (sign-up, or upgrading a guest account) will point at the wrong place.
-5. Push to `main`. Check the Actions tab for progress; the site publishes to `https://<username>.github.io/<repo>/`.
-
-Notes on how it works: the build uses `--base-href /<repo-name>/` (read from the repo name automatically, so renaming the repo doesn't break it), and copies `index.html` to `404.html` in the published output — GitHub Pages has no server-side routing, so this lets Angular's router still handle deep links (e.g. `/patients/123`) on a hard refresh instead of showing a 404.
+`supabase/schema.sql` isn't applied automatically by `start` either paste it into the local Studio SQL editor (default `http://127.0.0.1:54323`) or move it under `supabase/migrations/` and run `npx supabase db reset`. `supabase start` prints a local API URL (`http://127.0.0.1:54321`) and anon key — put those into `src/environments/environment.ts` instead of a hosted project's values. Stop it with `npx supabase stop`.
 
 ## Data model
 
