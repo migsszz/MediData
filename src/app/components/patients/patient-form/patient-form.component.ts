@@ -8,9 +8,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PatientService } from '../../../core/services/patient.service';
-import { SupabaseService } from '../../../core/services/supabase.service';
-import { Sex } from '../../../core/models/patient.model';
+import { PatientService } from '../../../services/patient.service';
+import { SupabaseService } from '../../../services/supabase.service';
+import { Sex } from '../../../models/patient.model';
 
 @Component({
   selector: 'app-patient-form',

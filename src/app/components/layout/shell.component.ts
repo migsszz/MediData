@@ -10,8 +10,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { map, shareReplay } from 'rxjs';
-import { SupabaseService } from '../../core/services/supabase.service';
-import { ThemeService } from '../../core/services/theme.service';
+import { SupabaseService } from '../../services/supabase.service';
+import { ThemeService } from '../../services/theme.service';
 import { UpgradeAccountDialogComponent } from '../upgrade-account-dialog/upgrade-account-dialog.component';
 
 const SIDEBAR_COLLAPSED_KEY = 'medidata-sidebar-collapsed';
