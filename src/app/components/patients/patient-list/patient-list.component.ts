@@ -1,37 +1,19 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PatientService } from '../../../services/patient.service';
 import { Patient } from '../../../models/patient.model';
 
 @Component({
   selector: 'app-patient-list',
   standalone: true,
-  imports: [
-    CommonModule,
-    DatePipe,
-    RouterLink,
-    MatTableModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule
-  ],
-  templateUrl: './patient-list.component.html',
-  styleUrl: './patient-list.component.scss'
+  imports: [DatePipe, RouterLink],
+  templateUrl: './patient-list.component.html'
 })
 export class PatientListComponent implements OnInit {
   patients = signal<Patient[]>([]);
   loading = signal(true);
   searchTerm = signal('');
-  displayedColumns = ['name', 'dob', 'sex', 'phone', 'actions'];
 
   filteredPatients = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();

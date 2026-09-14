@@ -1,101 +1,147 @@
-<mat-sidenav-container class="app-container">
-  <mat-sidenav
-    #drawer
-    class="app-sidenav"
-    [class.collapsed]="!(isHandset$ | async) && collapsed()"
-    [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-    [mode]="(isHandset$ | async) ? 'over' : 'side'"
-    [opened]="(isHandset$ | async) === false"
+<div class="h-screen flex overflow-hidden bg-base-100">
+  <!-- Desktop sidebar -->
+  <aside
+    class="hidden md:flex md:flex-col bg-base-200 transition-[width] duration-200 overflow-hidden shrink-0"
+    [class]="collapsed() ? 'hidden md:flex md:flex-col bg-base-200 transition-[width] duration-200 overflow-hidden shrink-0 w-[72px]' : 'hidden md:flex md:flex-col bg-base-200 transition-[width] duration-200 overflow-hidden shrink-0 w-60'"
   >
-    <div class="sidenav-header">
+    <div class="flex items-center h-16 shrink-0 px-2" [class]="collapsed() ? 'justify-center' : 'justify-between pl-3'">
       @if (!collapsed()) {
-        <div class="brand">MediData</div>
+        <span class="text-lg font-semibold whitespace-nowrap">MediData</span>
       }
-      @if (!(isHandset$ | async)) {
-        <button
-          mat-icon-button
-          class="collapse-toggle"
-          (click)="toggleCollapsed()"
-          [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
-          [matTooltip]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
-          matTooltipPosition="right"
-        >
-          <mat-icon>{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
-        </button>
-      }
+      <button
+        type="button"
+        class="btn btn-ghost btn-circle btn-sm"
+        (click)="toggleCollapsed()"
+        [attr.aria-label]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+        [attr.title]="collapsed() ? 'Expand navigation' : 'Collapse navigation'"
+      >
+        <span class="material-icons text-lg">{{ collapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+      </button>
     </div>
+
     @if (!collapsed()) {
-      <mat-nav-list>
-        <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>bar_chart</mat-icon>
-          <span matListItemTitle>Dashboard</span>
-        </a>
-        <a mat-list-item routerLink="/patients" routerLinkActive="active-link">
-          <mat-icon matListItemIcon>groups</mat-icon>
-          <span matListItemTitle>Patients</span>
-        </a>
-      </mat-nav-list>
+      <ul class="menu w-full px-2 gap-1 flex-nowrap">
+        <li>
+          <a routerLink="/dashboard" routerLinkActive="menu-active">
+            <span class="material-icons text-lg">bar_chart</span>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a routerLink="/patients" routerLinkActive="menu-active">
+            <span class="material-icons text-lg">groups</span>
+            Patients
+          </a>
+        </li>
+      </ul>
     } @else {
-      <!-- Collapsed: plain icon buttons instead of mat-list-item. Icon
-           buttons are built to center a single icon with symmetric padding,
-           sidestepping mat-list-item's icon+text layout (asymmetric margins,
-           an always-present content wrapper) entirely. -->
-      <div class="collapsed-nav">
+      <div class="flex flex-col items-center gap-2 pt-2">
         <a
-          mat-icon-button
           routerLink="/dashboard"
-          routerLinkActive="active-icon"
-          matTooltip="Dashboard"
-          matTooltipPosition="right"
+          routerLinkActive="bg-base-300"
+          class="btn btn-ghost btn-circle"
           aria-label="Dashboard"
+          title="Dashboard"
         >
-          <mat-icon>bar_chart</mat-icon>
+          <span class="material-icons text-lg">bar_chart</span>
         </a>
         <a
-          mat-icon-button
           routerLink="/patients"
-          routerLinkActive="active-icon"
-          matTooltip="Patients"
-          matTooltipPosition="right"
+          routerLinkActive="bg-base-300"
+          class="btn btn-ghost btn-circle"
           aria-label="Patients"
+          title="Patients"
         >
-          <mat-icon>groups</mat-icon>
+          <span class="material-icons text-lg">groups</span>
         </a>
       </div>
     }
-  </mat-sidenav>
+  </aside>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      @if (isHandset$ | async) {
-        <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle navigation">
-          <mat-icon>menu</mat-icon>
+  <!-- Mobile drawer (overlay) -->
+  @if (isHandset() && mobileOpen()) {
+    <div class="fixed inset-0 z-40 bg-black/50" (click)="mobileOpen.set(false)"></div>
+    <aside
+      cdkTrapFocus
+      cdkTrapFocusAutoCapture
+      class="fixed inset-y-0 left-0 z-50 w-64 bg-base-200 flex flex-col shadow-xl"
+      role="dialog"
+      aria-label="Navigation"
+    >
+      <div class="flex items-center justify-between h-16 px-4 shrink-0">
+        <span class="text-lg font-semibold">MediData</span>
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle btn-sm"
+          (click)="mobileOpen.set(false)"
+          aria-label="Close navigation"
+        >
+          <span class="material-icons text-lg">close</span>
         </button>
-      }
-      <span class="spacer"></span>
-      <button
-        mat-icon-button
-        (click)="theme.toggle()"
-        [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-        [title]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-      >
-        <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
-      </button>
-      <button mat-icon-button (click)="signOut()" aria-label="Sign out" title="Sign out">
-        <mat-icon>logout</mat-icon>
-      </button>
-    </mat-toolbar>
+      </div>
+      <ul class="menu w-full px-2 gap-1 flex-nowrap">
+        <li>
+          <a routerLink="/dashboard" routerLinkActive="menu-active" (click)="mobileOpen.set(false)">
+            <span class="material-icons text-lg">bar_chart</span>
+            Dashboard
+          </a>
+        </li>
+        <li>
+          <a routerLink="/patients" routerLinkActive="menu-active" (click)="mobileOpen.set(false)">
+            <span class="material-icons text-lg">groups</span>
+            Patients
+          </a>
+        </li>
+      </ul>
+    </aside>
+  }
+
+  <div class="flex-1 flex flex-col min-w-0">
+    <header class="navbar bg-primary text-primary-content shrink-0">
+      <div class="flex-1">
+        @if (isHandset()) {
+          <button
+            type="button"
+            class="btn btn-ghost btn-circle"
+            (click)="mobileOpen.set(true)"
+            aria-label="Toggle navigation"
+          >
+            <span class="material-icons">menu</span>
+          </button>
+        }
+      </div>
+      <div class="flex-none flex items-center gap-1">
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle"
+          (click)="theme.toggle()"
+          [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          [attr.title]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        >
+          <span class="material-icons">{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+        </button>
+        <button type="button" class="btn btn-ghost btn-circle" (click)="signOut()" aria-label="Sign out" title="Sign out">
+          <span class="material-icons">logout</span>
+        </button>
+      </div>
+    </header>
 
     @if (isAnonymous()) {
-      <div class="guest-banner">
-        <mat-icon>info</mat-icon>
-        <span>You're exploring a demo — your data here is private to this session.</span>
-        <button mat-flat-button color="primary" (click)="openUpgradeDialog()">Upgrade to full account</button>
+      <div class="alert alert-info rounded-none flex-wrap gap-3 shrink-0">
+        <span class="material-icons">info</span>
+        <span class="flex-1">You're exploring a demo — your data here is private to this session.</span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openUpgradeDialog()">Upgrade to full account</button>
       </div>
     }
 
-    <main class="content" [class.expanded]="!(isHandset$ | async) && collapsed()">
+    <main
+      [class]="
+        collapsed()
+          ? 'flex-1 overflow-y-auto p-4 md:p-6 w-full'
+          : 'flex-1 overflow-y-auto p-4 md:p-6 w-full max-w-[1200px] mx-auto'
+      "
+    >
       <router-outlet></router-outlet>
     </main>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+  </div>
+</div>

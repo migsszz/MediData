@@ -1,50 +1,54 @@
-<div class="login-page">
-  <mat-card class="login-card">
-    <h1>MediData</h1>
-    <p class="subtitle">{{ mode() === 'signin' ? 'Sign in to your account' : 'Create an account' }}</p>
+<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
+  <div class="card w-full max-w-sm bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h1 class="text-2xl font-bold text-center">MediData</h1>
+      <p class="text-center text-sm text-base-content/60 mb-2">
+        {{ mode() === 'signin' ? 'Sign in to your account' : 'Create an account' }}
+      </p>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
-        <input matInput type="email" formControlName="email" autocomplete="email" />
-      </mat-form-field>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1">
+        <fieldset class="fieldset">
+          <label class="label" for="login-email">Email</label>
+          <input id="login-email" type="email" formControlName="email" autocomplete="email" class="input w-full" />
+        </fieldset>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Password</mat-label>
-        <input matInput type="password" formControlName="password" autocomplete="current-password" />
-      </mat-form-field>
+        <fieldset class="fieldset">
+          <label class="label" for="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            class="input w-full"
+          />
+        </fieldset>
 
-      @if (errorMessage()) {
-        <p class="error">{{ errorMessage() }}</p>
-      }
+        @if (errorMessage()) {
+          <p class="text-error text-sm -mt-1">{{ errorMessage() }}</p>
+        }
 
-      <button mat-flat-button color="primary" class="full-width" type="submit" [disabled]="form.invalid || loading()">
-        @if (loading()) {
-          <mat-spinner diameter="20"></mat-spinner>
+        <button type="submit" class="btn btn-primary w-full" [disabled]="form.invalid || loading()">
+          @if (loading()) {
+            <span class="loading loading-spinner loading-sm"></span>
+          } @else {
+            {{ mode() === 'signin' ? 'Sign in' : 'Sign up' }}
+          }
+        </button>
+      </form>
+
+      <button type="button" class="btn btn-ghost btn-sm w-full mt-1" (click)="toggleMode()">
+        {{ mode() === 'signin' ? "Need an account? Sign up" : 'Already have an account? Sign in' }}
+      </button>
+
+      <div class="divider text-xs text-base-content/50">or</div>
+
+      <button type="button" class="btn btn-outline w-full" (click)="tryDemo()" [disabled]="demoLoading()">
+        @if (demoLoading()) {
+          <span class="loading loading-spinner loading-sm"></span>
         } @else {
-          {{ mode() === 'signin' ? 'Sign in' : 'Sign up' }}
+          Try the demo
         }
       </button>
-    </form>
-
-    <button mat-button type="button" class="full-width toggle" (click)="toggleMode()">
-      {{ mode() === 'signin' ? "Need an account? Sign up" : 'Already have an account? Sign in' }}
-    </button>
-
-    <div class="divider"><span>or</span></div>
-
-    <button
-      mat-stroked-button
-      type="button"
-      class="full-width"
-      (click)="tryDemo()"
-      [disabled]="demoLoading()"
-    >
-      @if (demoLoading()) {
-        <mat-spinner diameter="20"></mat-spinner>
-      } @else {
-        Try the demo
-      }
-    </button>
-  </mat-card>
+    </div>
+  </div>
 </div>

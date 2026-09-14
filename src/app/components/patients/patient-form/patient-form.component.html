@@ -1,80 +1,80 @@
-<div class="page-header">
-  <h1>{{ patientId() ? 'Edit patient' : 'Add patient' }}</h1>
-</div>
+<h1 class="text-2xl font-bold mb-4">{{ patientId() ? 'Edit patient' : 'Add patient' }}</h1>
 
 @if (loading()) {
-  <div class="loading">
-    <mat-spinner diameter="32"></mat-spinner>
+  <div class="flex justify-center py-12">
+    <span class="loading loading-spinner loading-lg"></span>
   </div>
 } @else {
-  <mat-card class="form-card">
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <div class="grid">
-        <mat-form-field appearance="outline">
-          <mat-label>First name</mat-label>
-          <input matInput formControlName="first_name" />
-        </mat-form-field>
+  <div class="card bg-base-100 shadow max-w-3xl">
+    <div class="card-body">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+          <fieldset class="fieldset">
+            <label class="label" for="pf-first-name">First name</label>
+            <input id="pf-first-name" class="input w-full" formControlName="first_name" />
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Last name</mat-label>
-          <input matInput formControlName="last_name" />
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-last-name">Last name</label>
+            <input id="pf-last-name" class="input w-full" formControlName="last_name" />
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Date of birth</mat-label>
-          <input matInput type="date" formControlName="date_of_birth" />
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-dob">Date of birth</label>
+            <input id="pf-dob" class="input w-full" type="date" formControlName="date_of_birth" />
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Sex</mat-label>
-          <mat-select formControlName="sex">
-            @for (opt of sexOptions; track opt) {
-              <mat-option [value]="opt">{{ opt }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-sex">Sex</label>
+            <select id="pf-sex" class="select w-full" formControlName="sex">
+              @for (opt of sexOptions; track opt) {
+                <option [value]="opt">{{ opt }}</option>
+              }
+            </select>
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Phone</mat-label>
-          <input matInput formControlName="phone" />
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-phone">Phone</label>
+            <input id="pf-phone" class="input w-full" formControlName="phone" />
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-email">Email</label>
+            <input id="pf-email" class="input w-full" type="email" formControlName="email" />
+          </fieldset>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Blood type</mat-label>
-          <input matInput formControlName="blood_type" placeholder="e.g. O+" />
-        </mat-form-field>
+          <fieldset class="fieldset">
+            <label class="label" for="pf-blood-type">Blood type</label>
+            <input id="pf-blood-type" class="input w-full" formControlName="blood_type" placeholder="e.g. O+" />
+          </fieldset>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Address</mat-label>
-          <input matInput formControlName="address" />
-        </mat-form-field>
+          <fieldset class="fieldset sm:col-span-2">
+            <label class="label" for="pf-address">Address</label>
+            <input id="pf-address" class="input w-full" formControlName="address" />
+          </fieldset>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Allergies</mat-label>
-          <textarea matInput formControlName="allergies" rows="2"></textarea>
-        </mat-form-field>
+          <fieldset class="fieldset sm:col-span-2">
+            <label class="label" for="pf-allergies">Allergies</label>
+            <textarea id="pf-allergies" class="textarea w-full" formControlName="allergies" rows="2"></textarea>
+          </fieldset>
 
-        <mat-form-field appearance="outline" class="span-2">
-          <mat-label>Notes</mat-label>
-          <textarea matInput formControlName="notes" rows="3"></textarea>
-        </mat-form-field>
-      </div>
+          <fieldset class="fieldset sm:col-span-2">
+            <label class="label" for="pf-notes">Notes</label>
+            <textarea id="pf-notes" class="textarea w-full" formControlName="notes" rows="3"></textarea>
+          </fieldset>
+        </div>
 
-      @if (errorMessage()) {
-        <p class="error">{{ errorMessage() }}</p>
-      }
+        @if (errorMessage()) {
+          <p class="text-error text-sm mt-2">{{ errorMessage() }}</p>
+        }
 
-      <div class="actions">
-        <a mat-button routerLink="/patients">Cancel</a>
-        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving()">
-          {{ saving() ? 'Saving...' : 'Save patient' }}
-        </button>
-      </div>
-    </form>
-  </mat-card>
+        <div class="flex justify-end gap-2 mt-4">
+          <a class="btn btn-ghost" routerLink="/patients">Cancel</a>
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">
+            {{ saving() ? 'Saving...' : 'Save patient' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 }

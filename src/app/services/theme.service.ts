@@ -3,6 +3,10 @@ import { Injectable, effect, signal } from '@angular/core';
 export type ThemeMode = 'light' | 'dark';
 
 const STORAGE_KEY = 'medidata-theme';
+const DAISYUI_THEME: Record<ThemeMode, string> = {
+  light: 'medidata-light',
+  dark: 'medidata-dark'
+};
 
 function getInitialMode(): ThemeMode {
   try {
@@ -21,7 +25,7 @@ export class ThemeService {
   constructor() {
     effect(() => {
       const mode = this.mode();
-      document.documentElement.classList.toggle('dark-theme', mode === 'dark');
+      document.documentElement.setAttribute('data-theme', DAISYUI_THEME[mode]);
       try {
         localStorage.setItem(STORAGE_KEY, mode);
       } catch {

@@ -1,7 +1,5 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { forkJoin } from 'rxjs';
@@ -24,9 +22,8 @@ function ageFromDob(dob: string): number {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatProgressSpinnerModule, BaseChartDirective],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  imports: [BaseChartDirective],
+  templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
   loading = signal(true);
@@ -81,7 +78,7 @@ export class DashboardComponent implements OnInit {
 
     return {
       labels: months,
-      datasets: [{ data: counts, label: 'Encounters', backgroundColor: '#3f51b5' }]
+      datasets: [{ data: counts, label: 'Encounters', backgroundColor: '#2563eb' }]
     };
   });
 
@@ -99,7 +96,7 @@ export class DashboardComponent implements OnInit {
 
     return {
       labels: sorted.map(([label]) => label),
-      datasets: [{ data: sorted.map(([, count]) => count), label: 'Cases', backgroundColor: '#00897b' }]
+      datasets: [{ data: sorted.map(([, count]) => count), label: 'Cases', backgroundColor: '#0d9488' }]
     };
   });
 

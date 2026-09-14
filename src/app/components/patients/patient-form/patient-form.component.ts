@@ -1,13 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PatientService } from '../../../services/patient.service';
 import { SupabaseService } from '../../../services/supabase.service';
 import { Sex } from '../../../models/patient.model';
@@ -15,18 +8,8 @@ import { Sex } from '../../../models/patient.model';
 @Component({
   selector: 'app-patient-form',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatProgressSpinnerModule
-],
-  templateUrl: './patient-form.component.html',
-  styleUrl: './patient-form.component.scss'
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './patient-form.component.html'
 })
 export class PatientFormComponent implements OnInit {
   private fb = inject(FormBuilder);

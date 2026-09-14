@@ -1,30 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { DialogRef } from '@angular/cdk/dialog';
 import { SupabaseService } from '../../services/supabase.service';
 
 @Component({
   selector: 'app-upgrade-account-dialog',
   standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule
-  ],
-  templateUrl: './upgrade-account-dialog.component.html',
-  styleUrl: './upgrade-account-dialog.component.scss'
+  imports: [ReactiveFormsModule],
+  templateUrl: './upgrade-account-dialog.component.html'
 })
 export class UpgradeAccountDialogComponent {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
-  private dialogRef = inject(MatDialogRef<UpgradeAccountDialogComponent>);
+  private dialogRef = inject(DialogRef<void, UpgradeAccountDialogComponent>);
 
   saving = signal(false);
   errorMessage = signal<string | null>(null);
