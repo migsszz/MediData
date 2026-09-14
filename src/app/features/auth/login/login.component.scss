@@ -37,3 +37,20 @@
 .toggle {
   margin-top: 8px;
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.8125rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--mat-sys-outline-variant);
+  }
+}

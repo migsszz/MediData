@@ -30,5 +30,21 @@
     <button mat-button type="button" class="full-width toggle" (click)="toggleMode()">
       {{ mode() === 'signin' ? "Need an account? Sign up" : 'Already have an account? Sign in' }}
     </button>
+
+    <div class="divider"><span>or</span></div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="full-width"
+      (click)="tryDemo()"
+      [disabled]="demoLoading()"
+    >
+      @if (demoLoading()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Try the demo
+      }
+    </button>
   </mat-card>
 </div>
