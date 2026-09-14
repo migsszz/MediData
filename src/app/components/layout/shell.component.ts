@@ -1,8 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule, MatSidenavContainer } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -58,6 +58,8 @@ export class ShellComponent {
 
   collapsed = signal(getInitialCollapsed());
 
+  private sidenavContainer = viewChild(MatSidenavContainer);
+
   toggleCollapsed() {
     const next = !this.collapsed();
     this.collapsed.set(next);
@@ -66,6 +68,21 @@ export class ShellComponent {
     } catch {
       // Ignore write failures; the preference just won't persist across reloads.
     }
+    // mat-sidenav-content only recalculates its margin on open/close events,
+    // not on a plain CSS width change of an already-open 'side' drawer — so
+    // without this, the content/banner area would stay stuck at whatever
+    // width it had when the sidenav last opened. Re-sync every frame for the
+    // duration of the sidenav's own width transition so they move together.
+    const container = this.sidenavContainer();
+    if (!container) return;
+    const start = performance.now();
+    const sync = () => {
+      container.updateContentMargins();
+      if (performance.now() - start < 250) {
+        requestAnimationFrame(sync);
+      }
+    };
+    requestAnimationFrame(sync);
   }
 
   async signOut() {
