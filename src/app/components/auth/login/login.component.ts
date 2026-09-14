@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../services/supabase.service';
 import { DemoDataService } from '../../../services/demo-data.service';
 
@@ -15,10 +15,16 @@ export class LoginComponent {
   private supabase = inject(SupabaseService);
   private demoData = inject(DemoDataService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loading = signal(false);
   demoLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  infoMessage = signal<string | null>(
+    this.route.snapshot.queryParamMap.get('reason') === 'idle'
+      ? "You were signed out after 10 minutes of inactivity."
+      : null
+  );
   mode = signal<'signin' | 'signup'>('signin');
 
   form = this.fb.group({
@@ -29,12 +35,14 @@ export class LoginComponent {
   toggleMode() {
     this.mode.set(this.mode() === 'signin' ? 'signup' : 'signin');
     this.errorMessage.set(null);
+    this.infoMessage.set(null);
   }
 
   async submit() {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.infoMessage.set(null);
 
     const { email, password } = this.form.getRawValue();
     const action =
@@ -61,6 +69,7 @@ export class LoginComponent {
   async tryDemo() {
     this.demoLoading.set(true);
     this.errorMessage.set(null);
+    this.infoMessage.set(null);
 
     const { data, error } = await this.supabase.signInAnonymously();
 

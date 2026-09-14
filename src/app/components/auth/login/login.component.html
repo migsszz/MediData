@@ -6,6 +6,13 @@
         {{ mode() === 'signin' ? 'Sign in to your account' : 'Create an account' }}
       </p>
 
+      @if (infoMessage()) {
+        <div class="alert alert-info mb-3 text-sm py-2">
+          <span class="material-icons text-lg">info</span>
+          <span>{{ infoMessage() }}</span>
+        </div>
+      }
+
       <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-1">
         <fieldset class="fieldset">
           <label class="label" for="login-email">Email</label>
