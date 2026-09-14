@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
@@ -7,6 +7,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { SupabaseService } from '../../services/supabase.service';
 import { ThemeService } from '../../services/theme.service';
+import { IdleTimeoutService } from '../../services/idle-timeout.service';
 import { UpgradeAccountDialogComponent } from '../upgrade-account-dialog/upgrade-account-dialog.component';
 
 const SIDEBAR_COLLAPSED_KEY = 'medidata-sidebar-collapsed';
@@ -25,13 +26,22 @@ function getInitialCollapsed(): boolean {
   imports: [RouterLink, RouterLinkActive, RouterOutlet, CdkTrapFocus],
   templateUrl: './shell.component.html'
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit, OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private supabase = inject(SupabaseService);
   private router = inject(Router);
   private dialog = inject(Dialog);
+  private idleTimeout = inject(IdleTimeoutService);
   protected theme = inject(ThemeService);
   protected isAnonymous = this.supabase.isAnonymous;
+
+  ngOnInit() {
+    this.idleTimeout.start();
+  }
+
+  ngOnDestroy() {
+    this.idleTimeout.stop();
+  }
 
   protected isHandset = toSignal(
     this.breakpointObserver.observe(Breakpoints.Handset).pipe(map((result) => result.matches)),
@@ -59,6 +69,7 @@ export class ShellComponent {
   }
 
   async signOut() {
+    this.idleTimeout.stop();
     await this.supabase.signOut();
     this.router.navigateByUrl('/login');
   }
