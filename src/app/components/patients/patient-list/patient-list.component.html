@@ -36,7 +36,16 @@
             <td>{{ p.date_of_birth | date: 'mediumDate' }}</td>
             <td class="capitalize">{{ p.sex }}</td>
             <td>{{ p.phone || '—' }}</td>
-            <td class="text-right">
+            <td class="text-right whitespace-nowrap">
+              <button
+                type="button"
+                class="btn btn-ghost btn-circle btn-sm"
+                (click)="deletePatient(p, $event)"
+                title="Delete"
+                aria-label="Delete patient"
+              >
+                <span class="material-icons text-lg">delete</span>
+              </button>
               <a class="btn btn-ghost btn-circle btn-sm" [routerLink]="['/patients', p.id]" title="View">
                 <span class="material-icons text-lg">chevron_right</span>
               </a>

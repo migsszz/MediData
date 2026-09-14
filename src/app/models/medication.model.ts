@@ -2,6 +2,7 @@ export interface Medication {
   id: string;
   created_at: string;
   created_by: string | null;
+  is_seed: boolean;
   patient_id: string;
   name: string;
   dosage: string;
@@ -11,4 +12,4 @@ export interface Medication {
   active: boolean;
 }
 
-export type MedicationInput = Omit<Medication, 'id' | 'created_at' | 'created_by'>;
+export type MedicationInput = Omit<Medication, 'id' | 'created_at' | 'created_by' | 'is_seed'>;

@@ -1,12 +1,13 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { PatientService } from '../../../services/patient.service';
 import { EncounterService } from '../../../services/encounter.service';
 import { MedicationService } from '../../../services/medication.service';
 import { SupabaseService } from '../../../services/supabase.service';
+import { DeleteGuardService } from '../../../services/delete-guard.service';
 import { Patient } from '../../../models/patient.model';
 import { Encounter } from '../../../models/encounter.model';
 import { Medication } from '../../../models/medication.model';
@@ -31,10 +32,12 @@ function ageFromDob(dob: string): number {
 export class PatientDetailComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private patientService = inject(PatientService);
   private encounterService = inject(EncounterService);
   private medicationService = inject(MedicationService);
   private supabase = inject(SupabaseService);
+  private deleteGuard = inject(DeleteGuardService);
 
   patient = signal<Patient | null>(null);
   encounters = signal<Encounter[]>([]);
@@ -160,5 +163,33 @@ export class PatientDetailComponent implements OnInit {
         },
         error: () => this.savingMedication.set(false)
       });
+  }
+
+  async deletePatient() {
+    const p = this.patient();
+    if (!p) return;
+
+    const proceed = await this.deleteGuard.confirmDelete(
+      p.is_seed,
+      `${p.first_name} ${p.last_name}`,
+      'This also deletes all of their encounters and medications.'
+    );
+    if (!proceed) return;
+
+    this.patientService.delete(p.id).subscribe(() => this.router.navigateByUrl('/patients'));
+  }
+
+  async deleteEncounter(e: Encounter) {
+    const proceed = await this.deleteGuard.confirmDelete(e.is_seed, `the encounter from ${e.visit_date}`);
+    if (!proceed) return;
+
+    this.encounterService.delete(e.id).subscribe(() => this.refreshEncounters());
+  }
+
+  async deleteMedication(m: Medication) {
+    const proceed = await this.deleteGuard.confirmDelete(m.is_seed, m.name);
+    if (!proceed) return;
+
+    this.medicationService.delete(m.id).subscribe(() => this.refreshMedications());
   }
 }

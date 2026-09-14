@@ -19,6 +19,14 @@
 -- Any pre-existing row with a null created_by (e.g. from before this
 -- policy existed) becomes invisible to everyone under these policies —
 -- back-fill created_by for those rows manually if you have any.
+--
+-- is_seed marks rows inserted by DemoDataService's seeding (as opposed to
+-- rows a guest adds themselves during their session). The app uses it to
+-- block guests from deleting the seeded sample rows, and to always drop
+-- seed rows (never carrying them into a real account) when a guest
+-- upgrades — see UpgradeAccountDialogComponent. Not enforced at the RLS
+-- level since it's a UX/product concern, not a security boundary: it's
+-- always the guest's own data either way.
 
 create extension if not exists "pgcrypto";
 
@@ -26,6 +34,7 @@ create table if not exists patients (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
+  is_seed boolean not null default false,
   first_name text not null,
   last_name text not null,
   date_of_birth date not null,
@@ -42,6 +51,7 @@ create table if not exists encounters (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
+  is_seed boolean not null default false,
   patient_id uuid not null references patients (id) on delete cascade,
   visit_date date not null,
   reason text not null,
@@ -60,6 +70,7 @@ create table if not exists medications (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users (id),
+  is_seed boolean not null default false,
   patient_id uuid not null references patients (id) on delete cascade,
   name text not null,
   dosage text not null,
@@ -68,6 +79,11 @@ create table if not exists medications (
   end_date date,
   active boolean not null default true
 );
+
+-- Idempotent for existing databases created before is_seed existed.
+alter table patients add column if not exists is_seed boolean not null default false;
+alter table encounters add column if not exists is_seed boolean not null default false;
+alter table medications add column if not exists is_seed boolean not null default false;
 
 create index if not exists encounters_patient_id_idx on encounters (patient_id);
 create index if not exists medications_patient_id_idx on medications (patient_id);

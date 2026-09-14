@@ -2,6 +2,7 @@ export interface Encounter {
   id: string;
   created_at: string;
   created_by: string | null;
+  is_seed: boolean;
   patient_id: string;
   visit_date: string;
   reason: string;
@@ -16,4 +17,4 @@ export interface Encounter {
   spo2: number | null;
 }
 
-export type EncounterInput = Omit<Encounter, 'id' | 'created_at' | 'created_by'>;
+export type EncounterInput = Omit<Encounter, 'id' | 'created_at' | 'created_by' | 'is_seed'>;

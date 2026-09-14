@@ -4,6 +4,7 @@ export interface Patient {
   id: string;
   created_at: string;
   created_by: string | null;
+  is_seed: boolean;
   first_name: string;
   last_name: string;
   date_of_birth: string;
@@ -16,4 +17,4 @@ export interface Patient {
   notes: string | null;
 }
 
-export type PatientInput = Omit<Patient, 'id' | 'created_at' | 'created_by'>;
+export type PatientInput = Omit<Patient, 'id' | 'created_at' | 'created_by' | 'is_seed'>;

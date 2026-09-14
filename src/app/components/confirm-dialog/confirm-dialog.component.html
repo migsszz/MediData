@@ -1,0 +1,29 @@
+<!--
+  DaisyUI's .modal-box ships with opacity:0/scale:.95 by default, and only
+  animates to visible when nested under an ancestor matching
+  .modal.modal-open (or [open]/:popover-open/:target) — it's designed for
+  <dialog class="modal">, not a bare .modal-box. CDK Dialog already
+  provides the overlay/backdrop/centering/focus-trap, so rather than
+  fight DaisyUI's cascade-layered ancestor selectors (whose precedence
+  vs. plain utility overrides is unclear under Tailwind v4's layer
+  ordering), force the box's own open-state values directly — this is
+  the one visual property DaisyUI doesn't derive from a CSS variable.
+-->
+<div class="modal-box" style="opacity: 1; scale: 1; translate: 0;">
+  <h2 class="text-lg font-bold">{{ data.title }}</h2>
+  <p class="py-2 text-sm text-base-content/70">{{ data.message }}</p>
+  <div class="modal-action">
+    @if (data.infoOnly) {
+      <button type="button" class="btn" (click)="confirm()">OK</button>
+    } @else {
+      <button type="button" class="btn btn-ghost" (click)="cancel()">{{ data.cancelText || 'Cancel' }}</button>
+      <button
+        type="button"
+        [class]="data.danger ? 'btn btn-error' : 'btn btn-primary'"
+        (click)="confirm()"
+      >
+        {{ data.confirmText || 'Confirm' }}
+      </button>
+    }
+  </div>
+</div>
