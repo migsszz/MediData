@@ -41,12 +41,6 @@ npx supabase start
 - **Encounters** — one per visit: reason, diagnosis, notes, and vitals (blood pressure, heart rate, temperature, SpO2, weight, height).
 - **Medications** — name, dosage, frequency, start/end dates, active status.
 
-## Deleting data & the guest upgrade flow
-
-Patients, encounters, and medications can all be deleted (deleting a patient cascades to their encounters/medications). Every row has an `is_seed` flag, set only by the demo data seeder — guests can't delete seeded sample rows (a popup explains why instead), but can freely add, edit, and delete anything they create themselves during the session.
-
-When a guest upgrades to a full account (`UpgradeAccountDialogComponent`), seeded rows are always deleted afterward — they never carry over to a real account. If the guest created any of their own patients during the session, a popup asks whether to keep that data or start fresh; seeded rows are dropped either way.
-
 ## Dashboard
 
 The dashboard aggregates all patients/encounters into: total patients, encounters this month, average patient age, encounters over the last 6 months, patient sex distribution, and top diagnoses.
