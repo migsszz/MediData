@@ -21,6 +21,14 @@
       ::ng-deep .mdc-list-item__content {
         display: none;
       }
+
+      // The icon itself also ships with an asymmetric margin (16px left,
+      // 32px right — space reserved for text that isn't there anymore),
+      // which would still visually shift it left of center even with the
+      // content wrapper gone.
+      ::ng-deep .mdc-list-item__start {
+        margin: 0;
+      }
     }
   }
 }
