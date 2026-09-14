@@ -30,13 +30,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Write production environment
+      - name: Write environment files
+        # environment.ts must exist too (even though the production build's
+        # fileReplacements swaps it for environment.prod.ts at bundle time)
+        # because TypeScript resolves the import against it directly.
         run: |
-          echo "export const environment = {" > src/environments/environment.prod.ts
-          echo "  production: true," >> src/environments/environment.prod.ts
-          echo "  supabaseUrl: '${{ secrets.SUPABASE_URL }}'," >> src/environments/environment.prod.ts
-          echo "  supabaseAnonKey: '${{ secrets.SUPABASE_ANON_KEY }}'" >> src/environments/environment.prod.ts
-          echo "};" >> src/environments/environment.prod.ts
+          for f in src/environments/environment.ts src/environments/environment.prod.ts; do
+            echo "export const environment = {" > "$f"
+            echo "  production: true," >> "$f"
+            echo "  supabaseUrl: '${{ secrets.SUPABASE_URL }}'," >> "$f"
+            echo "  supabaseAnonKey: '${{ secrets.SUPABASE_ANON_KEY }}'" >> "$f"
+            echo "};" >> "$f"
+          done
 
       - name: Build
         run: npx ng build --configuration production --base-href "/${{ github.event.repository.name }}/"
