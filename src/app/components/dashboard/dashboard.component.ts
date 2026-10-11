@@ -7,6 +7,7 @@ import { ClinicalApi } from '../../data/clinical-api';
 import { OrgService } from '../../data/org.service';
 import { keys } from '../../data/queries';
 import { downloadCsv, toCsv } from '../../util/csv';
+import { ThemeService } from '../../services/theme.service';
 
 type Cohort = 'hypertension' | 'overdue' | null;
 
@@ -19,6 +20,7 @@ type Cohort = 'hypertension' | 'overdue' | null;
 export class DashboardComponent {
   private api = inject(ClinicalApi);
   private org = inject(OrgService);
+  private theme = inject(ThemeService);
 
   // The aggregation happens in Postgres (dashboard_stats); the browser only draws it.
   stats = injectQuery(() => ({
@@ -41,35 +43,54 @@ export class DashboardComponent {
     enabled: !!this.org.orgId() && this.openCohort() === 'overdue'
   }));
 
+  // Chart colours follow the active style and mode (canvas can't read CSS classes).
+  private colors = this.theme.chartColors;
+
   encountersByMonthData = computed<ChartData<'bar'>>(() => {
     const rows = this.stats.data()?.encounters_by_month ?? [];
     return {
       labels: rows.map((r) => new Date(r.month + 'T00:00:00').toLocaleString('default', { month: 'short', year: '2-digit' })),
-      datasets: [{ data: rows.map((r) => r.count), label: 'Encounters', backgroundColor: '#2563eb' }]
+      datasets: [{ data: rows.map((r) => r.count), label: 'Encounters', backgroundColor: this.colors().primary, borderRadius: 3 }]
     };
   });
 
   sexChartData = computed<ChartData<'pie'>>(() => {
     const rows = this.stats.data()?.sex_distribution ?? [];
-    return { labels: rows.map((r) => r.sex), datasets: [{ data: rows.map((r) => r.count) }] };
+    const c = this.colors();
+    return {
+      labels: rows.map((r) => r.sex),
+      datasets: [{ data: rows.map((r) => r.count), backgroundColor: [c.primary, c.secondary, c.accent, c.info], borderColor: 'transparent' }]
+    };
   });
 
   topDiagnosesData = computed<ChartData<'bar'>>(() => {
     const rows = this.stats.data()?.top_diagnoses ?? [];
     return {
       labels: rows.map((r) => (r.code ? `${r.label} (${r.code})` : r.label)),
-      datasets: [{ data: rows.map((r) => r.count), label: 'Cases', backgroundColor: '#0d9488' }]
+      datasets: [{ data: rows.map((r) => r.count), label: 'Cases', backgroundColor: this.colors().secondary, borderRadius: 3 }]
     };
   });
 
-  barOptions: ChartConfiguration['options'] = {
+  barOptions = computed<ChartConfiguration['options']>(() => this.axes(false));
+  horizontalBarOptions = computed<ChartConfiguration['options']>(() => this.axes(true));
+  pieOptions = computed<ChartConfiguration['options']>(() => ({
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-  };
-  horizontalBarOptions: ChartConfiguration['options'] = { ...this.barOptions, indexAxis: 'y' as const };
-  pieOptions: ChartConfiguration['options'] = { responsive: true, maintainAspectRatio: false };
+    plugins: { legend: { labels: { color: this.colors().text } } }
+  }));
+
+  private axes(horizontal: boolean): ChartConfiguration['options'] {
+    const c = this.colors();
+    const grid = { color: c.grid };
+    const ticks = { color: c.text, precision: 0 };
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: horizontal ? 'y' : 'x',
+      plugins: { legend: { display: false } },
+      scales: { x: { grid, ticks: { color: c.text } }, y: { beginAtZero: true, grid, ticks } }
+    };
+  }
 
   toggleCohort(c: Exclude<Cohort, null>) {
     this.openCohort.set(this.openCohort() === c ? null : c);

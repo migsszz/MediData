@@ -7,6 +7,7 @@ import { VITALS } from '../../../models/vitals';
 import { bloodPressurePair, errorMessage, notInFuture, vitalRange } from '../../../forms/validators';
 import { todayIso } from '../../../util/age';
 import { Suggestion, TypeaheadComponent } from '../../ui/typeahead.component';
+import { IconComponent } from '../../ui/icon.component';
 
 const REASON_PRESETS = ['Annual checkup', 'Follow-up visit', 'Acute symptoms', 'Prescription refill', 'Lab review'];
 
@@ -23,7 +24,7 @@ const draftKey = (patientId: string) => `medidata-encounter-draft-${patientId}`;
   selector: 'app-encounter-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TypeaheadComponent],
+  imports: [IconComponent, ReactiveFormsModule, TypeaheadComponent],
   templateUrl: './encounter-form.component.html'
 })
 export class EncounterFormComponent {

@@ -12,9 +12,11 @@ import type { Encounter, EncounterWithDetails } from '../../../models/encounter.
 import type { Medication } from '../../../models/medication.model';
 import type { Allergy } from '../../../models/allergy.model';
 import { SparklineComponent } from '../../ui/sparkline.component';
+import { EmptyStateComponent } from '../../ui/empty-state.component';
 import { EncounterFormComponent } from '../chart/encounter-form.component';
 import { MedicationFormComponent } from '../chart/medication-form.component';
 import { AllergyFormComponent } from '../chart/allergy-form.component';
+import { IconComponent } from '../../ui/icon.component';
 
 type Tab = 'timeline' | 'medications' | 'allergies';
 type TimelineItem =
@@ -30,12 +32,14 @@ interface VitalTrend {
   delta: number | null;
   /** The reading's date, so a stale value is visibly stale. */
   at: string;
+  normal: [number, number] | null;
+  status: 'high' | 'low' | null;
 }
 
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [DatePipe, RouterLink, SparklineComponent, EncounterFormComponent, MedicationFormComponent, AllergyFormComponent],
+  imports: [IconComponent, EmptyStateComponent, DatePipe, RouterLink, SparklineComponent, EncounterFormComponent, MedicationFormComponent, AllergyFormComponent],
   templateUrl: './patient-detail.component.html'
 })
 export class PatientDetailComponent {
@@ -118,7 +122,9 @@ export class PatientDetailComponent {
         values: series.map((o) => o.value),
         latest,
         delta: prev ? Math.round((last.value - prev.value) * 10) / 10 : null,
-        at: last.observed_at
+        at: last.observed_at,
+        normal: def.normal ?? null,
+        status: def.normal ? (last.value > def.normal[1] ? 'high' : last.value < def.normal[0] ? 'low' : null) : null
       });
     }
     return out;

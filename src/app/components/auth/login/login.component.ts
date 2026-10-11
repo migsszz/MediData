@@ -3,17 +3,20 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../services/supabase.service';
 import { ClinicalApi } from '../../../data/clinical-api';
+import { ThemeService } from '../../../services/theme.service';
+import { IconComponent } from '../../ui/icon.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [IconComponent, ReactiveFormsModule],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
   private api = inject(ClinicalApi);
+  protected theme = inject(ThemeService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
