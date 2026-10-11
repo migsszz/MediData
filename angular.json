@@ -106,7 +106,8 @@
               "@angular/cdk/overlay-prebuilt.css",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "karmaConfig": "karma.conf.js"
           }
         }
       }
