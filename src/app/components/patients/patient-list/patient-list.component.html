@@ -1,21 +1,25 @@
 <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
   <h1 class="text-2xl font-bold">Patients</h1>
-  <a class="btn btn-primary" routerLink="/patients/new">
-    <span class="material-icons text-lg">add</span>
-    Add patient
-  </a>
+  @if (org.canWrite()) {
+    <a class="btn btn-primary" routerLink="/patients/new">
+      <span class="material-icons text-lg">add</span>
+      Add patient
+    </a>
+  }
 </div>
 
 <label class="input mb-4 w-full max-w-xs">
   <span class="material-icons text-base opacity-60">search</span>
-  <input type="text" placeholder="Search by name" (input)="onSearchChange($any($event.target).value)" />
+  <input type="search" placeholder="Search by name" aria-label="Search patients by name" (input)="onSearchChange($any($event.target).value)" />
 </label>
 
-@if (loading()) {
+@if (patients.isPending()) {
   <div class="flex justify-center py-12">
     <span class="loading loading-spinner loading-lg"></span>
   </div>
-} @else if (filteredPatients().length === 0) {
+} @else if (patients.isError()) {
+  <div role="alert" class="alert alert-error">Couldn't load patients. {{ patients.error().message }}</div>
+} @else if (rows().length === 0) {
   <p class="text-center text-base-content/60 py-12">No patients found.</p>
 } @else {
   <div class="overflow-x-auto bg-base-100 rounded-box shadow">
@@ -30,23 +34,25 @@
         </tr>
       </thead>
       <tbody>
-        @for (p of filteredPatients(); track p.id) {
+        @for (p of rows(); track p.id) {
           <tr class="hover cursor-pointer" [routerLink]="['/patients', p.id]">
             <td>{{ p.last_name }}, {{ p.first_name }}</td>
             <td>{{ p.date_of_birth | date: 'mediumDate' }}</td>
             <td class="capitalize">{{ p.sex }}</td>
             <td>{{ p.phone || '—' }}</td>
             <td class="text-right whitespace-nowrap">
-              <button
-                type="button"
-                class="btn btn-ghost btn-circle btn-sm"
-                (click)="deletePatient(p, $event)"
-                title="Delete"
-                aria-label="Delete patient"
-              >
-                <span class="material-icons text-lg">delete</span>
-              </button>
-              <a class="btn btn-ghost btn-circle btn-sm" [routerLink]="['/patients', p.id]" title="View">
+              @if (org.canWrite()) {
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-circle btn-sm"
+                  (click)="archivePatient(p, $event)"
+                  title="Archive"
+                  aria-label="Archive patient"
+                >
+                  <span class="material-icons text-lg">archive</span>
+                </button>
+              }
+              <a class="btn btn-ghost btn-circle btn-sm" [routerLink]="['/patients', p.id]" title="Open chart" aria-label="Open chart">
                 <span class="material-icons text-lg">chevron_right</span>
               </a>
             </td>
@@ -55,4 +61,12 @@
       </tbody>
     </table>
   </div>
+
+  @if (patients.hasNextPage()) {
+    <div class="flex justify-center mt-4">
+      <button type="button" class="btn btn-outline" (click)="patients.fetchNextPage()" [disabled]="patients.isFetchingNextPage()">
+        {{ patients.isFetchingNextPage() ? 'Loading…' : 'Load more' }}
+      </button>
+    </div>
+  }
 }

@@ -1,243 +1,213 @@
-@if (loading()) {
+@if (patient.isPending()) {
   <div class="flex justify-center py-12">
     <span class="loading loading-spinner loading-lg"></span>
   </div>
-} @else if (patient()) {
-  @let p = patient()!;
-  <div class="flex items-start justify-between flex-wrap gap-3 mb-4">
+} @else if (patient.isError()) {
+  <div role="alert" class="alert alert-error">Couldn't load this patient. {{ patient.error().message }}</div>
+} @else if (patient.data(); as p) {
+  <div class="flex items-start justify-between flex-wrap gap-3 mb-3">
     <div>
       <h1 class="text-2xl font-bold">{{ p.first_name }} {{ p.last_name }}</h1>
       <p class="text-base-content/60 mt-1">
-        {{ age }} years old &middot; {{ p.sex }} &middot; DOB {{ p.date_of_birth | date: 'mediumDate' }}
+        {{ age() }} years old &middot; <span class="capitalize">{{ p.sex }}</span> &middot; DOB {{ p.date_of_birth | date: 'mediumDate' }}
+        @if (p.blood_type) {
+          &middot; {{ p.blood_type }}
+        }
       </p>
     </div>
-    <div class="flex gap-2">
-      <a class="btn btn-outline" [routerLink]="['/patients', p.id, 'edit']">
-        <span class="material-icons text-lg">edit</span>
-        Edit
-      </a>
-      <button type="button" class="btn btn-outline btn-error" (click)="deletePatient()">
-        <span class="material-icons text-lg">delete</span>
-        Delete
-      </button>
-    </div>
+    @if (org.canWrite()) {
+      <div class="flex gap-2">
+        <button type="button" class="btn btn-primary" (click)="form.set('encounter')" [disabled]="form() === 'encounter'">
+          <span class="material-icons text-lg">add</span>
+          New encounter
+        </button>
+        <a class="btn btn-outline" [routerLink]="['/patients', p.id, 'edit']">
+          <span class="material-icons text-lg">edit</span>
+          Edit
+        </a>
+        <button type="button" class="btn btn-outline btn-error" (click)="archivePatient()">
+          <span class="material-icons text-lg">archive</span>
+          Archive
+        </button>
+      </div>
+    }
   </div>
 
+  <!-- Always-visible safety banners -->
+  <div class="flex flex-col gap-2 mb-4">
+    @if (allergies.isSuccess()) {
+      <div role="alert" class="alert" [class.alert-error]="severeAllergies().length" [class.alert-warning]="!severeAllergies().length && activeAllergies().length" [class.alert-soft]="!activeAllergies().length">
+        <span class="material-icons">{{ activeAllergies().length ? 'warning' : 'check_circle' }}</span>
+        <div class="flex-1">
+          <strong>Allergies:</strong>
+          @if (activeAllergies().length) {
+            @for (a of activeAllergies(); track a.id) {
+              <span class="badge ml-1" [class.badge-error]="a.severity === 'severe'" [class.badge-warning]="a.severity !== 'severe'">
+                {{ a.substance }}{{ a.reaction ? ' — ' + a.reaction : '' }}
+              </span>
+            }
+          } @else {
+            None recorded
+          }
+        </div>
+      </div>
+    }
+    @if (medications.isSuccess()) {
+      <div class="alert alert-info alert-soft">
+        <span class="material-icons">medication</span>
+        <div class="flex-1">
+          <strong>Active medications:</strong>
+          @for (m of activeMedications(); track m.id) {
+            <span class="badge badge-info badge-soft ml-1">{{ m.name }} {{ m.dosage }}</span>
+          } @empty {
+            None
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (notice(); as n) {
+    <div role="status" class="alert alert-success alert-soft mb-4">{{ n }}</div>
+  }
+
+  @if (form() === 'encounter') {
+    <div class="card bg-base-100 shadow mb-4">
+      <div class="card-body">
+        <h2 class="card-title text-base">New encounter</h2>
+        <app-encounter-form
+          [patientId]="p.id"
+          [patientName]="p.first_name + ' ' + p.last_name"
+          (saved)="onSaved($event, 'Encounter')"
+          (cancelled)="form.set(null)"
+        />
+      </div>
+    </div>
+  }
+
+  @if (trends().length) {
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-4" aria-label="Vitals trends">
+      @for (t of trends(); track t.code) {
+        <div class="card bg-base-100 shadow">
+          <div class="card-body p-3 gap-0">
+            <div class="text-xs uppercase text-base-content/50">{{ t.label }}</div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-xl font-semibold">{{ t.latest }}</span>
+              <span class="text-xs text-base-content/60">{{ t.unit }}</span>
+              @if (t.delta !== null && t.delta !== 0) {
+                <span class="text-xs ml-auto" [class.text-error]="t.delta > 0" [class.text-success]="t.delta < 0">{{ t.delta > 0 ? '+' : '' }}{{ t.delta }}</span>
+              }
+            </div>
+            <app-sparkline [values]="t.values" [label]="t.label + ' trend'" />
+            <div class="text-xs text-base-content/50">{{ t.at | date: 'mediumDate' }}</div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
   <div class="card bg-base-100 shadow mb-4">
-    <div class="card-body">
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+    <div class="card-body py-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2">
         <div><span class="block text-xs uppercase text-base-content/50">Phone</span>{{ p.phone || '—' }}</div>
         <div><span class="block text-xs uppercase text-base-content/50">Email</span>{{ p.email || '—' }}</div>
-        <div><span class="block text-xs uppercase text-base-content/50">Blood type</span>{{ p.blood_type || '—' }}</div>
         <div><span class="block text-xs uppercase text-base-content/50">Address</span>{{ p.address || '—' }}</div>
-        <div class="sm:col-span-2">
-          <span class="block text-xs uppercase text-base-content/50">Allergies</span>{{ p.allergies || 'None recorded' }}
-        </div>
         @if (p.notes) {
-          <div class="sm:col-span-2">
-            <span class="block text-xs uppercase text-base-content/50">Notes</span>{{ p.notes }}
-          </div>
+          <div class="sm:col-span-3"><span class="block text-xs uppercase text-base-content/50">Notes</span>{{ p.notes }}</div>
         }
       </div>
     </div>
   </div>
 
   <div role="tablist" class="tabs tabs-lift">
-    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'encounters'" (click)="activeTab.set('encounters')">
-      Encounters
-    </a>
-    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'medications'" (click)="activeTab.set('medications')">
-      Medications
-    </a>
+    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'timeline'" (click)="activeTab.set('timeline')">Timeline</a>
+    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'medications'" (click)="activeTab.set('medications')">Medications</a>
+    <a role="tab" class="tab" [class.tab-active]="activeTab() === 'allergies'" (click)="activeTab.set('allergies')">Allergies</a>
   </div>
 
   <div class="py-4">
-    @if (activeTab() === 'encounters') {
-      <div class="collapse collapse-arrow bg-base-100 shadow mb-4" [class.collapse-open]="showEncounterForm()">
-        <div class="collapse-title font-medium cursor-pointer" (click)="showEncounterForm.set(!showEncounterForm())">
-          <span class="material-icons align-middle text-lg mr-1">add</span>
-          New encounter
-        </div>
-        <div class="collapse-content">
-          <form [formGroup]="encounterForm" (ngSubmit)="addEncounter()">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
-              <fieldset class="fieldset">
-                <label class="label">Visit date</label>
-                <input class="input w-full" type="date" formControlName="visit_date" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Reason for visit</label>
-                <input class="input w-full" formControlName="reason" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Diagnosis</label>
-                <input class="input w-full" formControlName="diagnosis" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Systolic BP (mmHg)</label>
-                <input class="input w-full" type="number" formControlName="blood_pressure_systolic" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Diastolic BP (mmHg)</label>
-                <input class="input w-full" type="number" formControlName="blood_pressure_diastolic" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Heart rate (bpm)</label>
-                <input class="input w-full" type="number" formControlName="heart_rate" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Temperature (&deg;C)</label>
-                <input class="input w-full" type="number" step="0.1" formControlName="temperature_c" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">SpO2 (%)</label>
-                <input class="input w-full" type="number" formControlName="spo2" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Weight (kg)</label>
-                <input class="input w-full" type="number" step="0.1" formControlName="weight_kg" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Height (cm)</label>
-                <input class="input w-full" type="number" step="0.1" formControlName="height_cm" />
-              </fieldset>
-
-              <fieldset class="fieldset sm:col-span-2">
-                <label class="label">Notes</label>
-                <textarea class="textarea w-full" formControlName="notes" rows="2"></textarea>
-              </fieldset>
-            </div>
-
-            <div class="flex justify-end mt-3">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                [disabled]="encounterForm.invalid || savingEncounter()"
-              >
-                {{ savingEncounter() ? 'Saving...' : 'Save encounter' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      @if (encounters().length === 0) {
-        <p class="text-center text-base-content/60 py-8">No encounters recorded yet.</p>
+    @if (activeTab() === 'timeline') {
+      @if (encounters.isPending()) {
+        <div class="flex justify-center py-8"><span class="loading loading-spinner"></span></div>
+      } @else if (timeline().length === 0) {
+        <p class="text-center text-base-content/60 py-8">Nothing recorded yet.</p>
       } @else {
-        <div class="flex flex-col gap-3">
-          @for (e of encounters(); track e.id) {
-            <div class="card bg-base-100 shadow">
-              <div class="card-body p-4">
-                <div class="flex justify-between flex-wrap gap-2">
-                  <div>
-                    <strong>{{ e.visit_date | date: 'mediumDate' }}</strong>
-                    <span class="text-base-content/60">&middot; {{ e.reason }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-circle btn-sm"
-                    (click)="deleteEncounter(e)"
-                    title="Delete encounter"
-                    aria-label="Delete encounter"
-                  >
-                    <span class="material-icons text-lg">delete</span>
-                  </button>
-                </div>
-                @if (e.diagnosis) {
-                  <p class="font-medium my-1">Diagnosis: {{ e.diagnosis }}</p>
-                }
-                <div class="flex flex-wrap gap-2 my-1">
-                  @if (e.blood_pressure_systolic && e.blood_pressure_diastolic) {
-                    <span class="badge badge-soft">BP {{ e.blood_pressure_systolic }}/{{ e.blood_pressure_diastolic }}</span>
+        <ul class="timeline timeline-vertical timeline-snap-icon timeline-compact">
+          @for (item of timeline(); track $index; let first = $first; let last = $last) {
+            <li>
+              @if (!first) { <hr /> }
+              <div class="timeline-middle">
+                <span class="material-icons text-lg" [class.text-primary]="item.kind === 'encounter'">
+                  {{ item.kind === 'encounter' ? 'stethoscope' : item.kind === 'med-start' ? 'play_circle' : 'stop_circle' }}
+                </span>
+              </div>
+              <div class="timeline-end timeline-box w-full mb-3">
+                @switch (item.kind) {
+                  @case ('encounter') {
+                    <div class="flex justify-between flex-wrap gap-2">
+                      <div>
+                        <strong>{{ item.encounter.visit_date | date: 'mediumDate' }}</strong>
+                        <span class="text-base-content/60">&middot; {{ item.encounter.reason }}</span>
+                      </div>
+                      @if (org.canWrite()) {
+                        <button type="button" class="btn btn-ghost btn-circle btn-xs" (click)="archiveEncounter(item.encounter)" aria-label="Archive encounter" title="Archive encounter">
+                          <span class="material-icons text-base">archive</span>
+                        </button>
+                      }
+                    </div>
+                    @for (d of item.encounter.diagnoses; track d.id) {
+                      <p class="my-1" [class.font-medium]="d.is_primary">
+                        {{ d.description }}
+                        @if (d.icd10_code) {
+                          <span class="badge badge-sm badge-soft">{{ d.icd10_code }}</span>
+                        }
+                      </p>
+                    }
+                    <div class="flex flex-wrap gap-2 my-1">
+                      @for (s of vitalsSummary(item.encounter); track s) {
+                        <span class="badge badge-soft">{{ s }}</span>
+                      }
+                    </div>
+                    @if (item.encounter.notes) {
+                      <p class="text-base-content/70 mt-1">{{ item.encounter.notes }}</p>
+                    }
                   }
-                  @if (e.heart_rate) {
-                    <span class="badge badge-soft">HR {{ e.heart_rate }} bpm</span>
+                  @case ('med-start') {
+                    <span>{{ item.date | date: 'mediumDate' }} &middot; Started <strong>{{ item.medication.name }}</strong> {{ item.medication.dosage }}, {{ item.medication.frequency }}</span>
                   }
-                  @if (e.temperature_c) {
-                    <span class="badge badge-soft">{{ e.temperature_c }}&deg;C</span>
+                  @case ('med-stop') {
+                    <span>{{ item.date | date: 'mediumDate' }} &middot; Stopped <strong>{{ item.medication.name }}</strong></span>
                   }
-                  @if (e.spo2) {
-                    <span class="badge badge-soft">SpO2 {{ e.spo2 }}%</span>
-                  }
-                  @if (e.weight_kg) {
-                    <span class="badge badge-soft">{{ e.weight_kg }} kg</span>
-                  }
-                  @if (e.height_cm) {
-                    <span class="badge badge-soft">{{ e.height_cm }} cm</span>
-                  }
-                </div>
-                @if (e.notes) {
-                  <p class="text-base-content/70 mt-1">{{ e.notes }}</p>
                 }
               </div>
-            </div>
+              @if (!last) { <hr /> }
+            </li>
           }
-        </div>
+        </ul>
       }
     }
 
     @if (activeTab() === 'medications') {
-      <div class="collapse collapse-arrow bg-base-100 shadow mb-4" [class.collapse-open]="showMedicationForm()">
-        <div class="collapse-title font-medium cursor-pointer" (click)="showMedicationForm.set(!showMedicationForm())">
-          <span class="material-icons align-middle text-lg mr-1">add</span>
-          New medication
-        </div>
-        <div class="collapse-content">
-          <form [formGroup]="medicationForm" (ngSubmit)="addMedication()">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
-              <fieldset class="fieldset">
-                <label class="label">Name</label>
-                <input class="input w-full" formControlName="name" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Dosage</label>
-                <input class="input w-full" formControlName="dosage" placeholder="e.g. 500mg" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Frequency</label>
-                <input class="input w-full" formControlName="frequency" placeholder="e.g. Twice daily" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">Start date</label>
-                <input class="input w-full" type="date" formControlName="start_date" />
-              </fieldset>
-
-              <fieldset class="fieldset">
-                <label class="label">End date</label>
-                <input class="input w-full" type="date" formControlName="end_date" />
-              </fieldset>
+      @if (org.canWrite()) {
+        @if (form() === 'medication') {
+          <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+              <app-medication-form [patientId]="p.id" [allergies]="activeAllergies()" (saved)="onSaved($event, 'Medication')" (cancelled)="form.set(null)" />
             </div>
+          </div>
+        } @else {
+          <button type="button" class="btn btn-outline btn-sm mb-4" (click)="form.set('medication')">
+            <span class="material-icons text-lg">add</span>
+            New medication
+          </button>
+        }
+      }
 
-            <div class="flex justify-end mt-3">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                [disabled]="medicationForm.invalid || savingMedication()"
-              >
-                {{ savingMedication() ? 'Saving...' : 'Save medication' }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      @if (medications().length === 0) {
+      @if ((medications.data() ?? []).length === 0) {
         <p class="text-center text-base-content/60 py-8">No medications recorded yet.</p>
       } @else {
         <div class="flex flex-col gap-3">
-          @for (m of medications(); track m.id) {
+          @for (m of medications.data(); track m.id) {
             <div class="card bg-base-100 shadow">
               <div class="card-body p-4">
                 <div class="flex justify-between flex-wrap gap-2">
@@ -245,25 +215,63 @@
                     <strong>{{ m.name }}</strong>
                     <span class="text-base-content/60">&middot; {{ m.dosage }} &middot; {{ m.frequency }}</span>
                   </div>
-                  <button
-                    type="button"
-                    class="btn btn-ghost btn-circle btn-sm"
-                    (click)="deleteMedication(m)"
-                    title="Delete medication"
-                    aria-label="Delete medication"
-                  >
-                    <span class="material-icons text-lg">delete</span>
-                  </button>
+                  @if (org.canWrite()) {
+                    <button type="button" class="btn btn-ghost btn-circle btn-sm" (click)="archiveMedication(m)" title="Archive medication" aria-label="Archive medication">
+                      <span class="material-icons text-lg">archive</span>
+                    </button>
+                  }
                 </div>
                 <p class="text-base-content/70 mt-1 flex items-center gap-2 flex-wrap">
-                  <span>
-                    {{ m.start_date | date: 'mediumDate' }} —
-                    {{ m.end_date ? (m.end_date | date: 'mediumDate') : 'ongoing' }}
-                  </span>
+                  <span>{{ m.start_date | date: 'mediumDate' }} — {{ m.end_date ? (m.end_date | date: 'mediumDate') : 'ongoing' }}</span>
                   @if (m.active) {
                     <span class="badge badge-success badge-soft">Active</span>
                   }
                 </p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'allergies') {
+      @if (org.canWrite()) {
+        @if (form() === 'allergy') {
+          <div class="card bg-base-100 shadow mb-4">
+            <div class="card-body">
+              <app-allergy-form [patientId]="p.id" (saved)="onSaved($event, 'Allergy')" (cancelled)="form.set(null)" />
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="btn btn-outline btn-sm mb-4" (click)="form.set('allergy')">
+            <span class="material-icons text-lg">add</span>
+            New allergy
+          </button>
+        }
+      }
+
+      @if ((allergies.data() ?? []).length === 0) {
+        <p class="text-center text-base-content/60 py-8">No allergies recorded.</p>
+      } @else {
+        <div class="flex flex-col gap-3">
+          @for (a of allergies.data(); track a.id) {
+            <div class="card bg-base-100 shadow">
+              <div class="card-body p-4">
+                <div class="flex justify-between flex-wrap gap-2">
+                  <div>
+                    <strong>{{ a.substance }}</strong>
+                    <span class="badge ml-2 capitalize" [class.badge-error]="a.severity === 'severe'" [class.badge-warning]="a.severity === 'moderate'" [class.badge-soft]="a.severity === 'mild'">{{ a.severity }}</span>
+                    <span class="badge badge-soft ml-1 capitalize">{{ a.category }}</span>
+                  </div>
+                  @if (org.canWrite()) {
+                    <button type="button" class="btn btn-ghost btn-circle btn-sm" (click)="archiveAllergy(a)" title="Archive allergy" aria-label="Archive allergy">
+                      <span class="material-icons text-lg">archive</span>
+                    </button>
+                  }
+                </div>
+                @if (a.reaction) {
+                  <p class="text-base-content/70">Reaction: {{ a.reaction }}</p>
+                }
               </div>
             </div>
           }

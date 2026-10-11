@@ -1,0 +1,69 @@
+<h1 class="text-2xl font-bold mb-4">Practice settings</h1>
+
+@if (!org.isAdmin()) {
+  <div role="alert" class="alert alert-warning">Only practice admins can manage members and view the audit log.</div>
+} @else {
+  <div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+      <h2 class="card-title text-base">Members of {{ org.org()?.name }}</h2>
+      <div class="overflow-x-auto">
+        <table class="table">
+          <thead><tr><th>User</th><th>Role</th><th>Since</th></tr></thead>
+          <tbody>
+            @for (m of members.data(); track m.user_id) {
+              <tr>
+                <td class="font-mono text-xs">{{ m.user_id }}</td>
+                <td class="capitalize">{{ m.role }}</td>
+                <td>{{ m.created_at | date: 'mediumDate' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="addMember()" class="flex flex-wrap items-end gap-2 mt-2">
+        <fieldset class="fieldset">
+          <label class="label" for="member-email">Add a member by email</label>
+          <input id="member-email" class="input" type="email" formControlName="email" placeholder="colleague@example.com" />
+        </fieldset>
+        <fieldset class="fieldset">
+          <label class="label" for="member-role">Role</label>
+          <select id="member-role" class="select capitalize" formControlName="role">
+            @for (r of roles; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </fieldset>
+        <button type="submit" class="btn btn-primary" [disabled]="saving()">Add member</button>
+      </form>
+      <p class="text-xs text-base-content/60">They need to have signed up already. Viewers can read; clinicians can also record and archive; admins can also manage members.</p>
+      @if (message(); as m) {
+        <p class="text-sm" [class.text-success]="m.ok" [class.text-error]="!m.ok" role="status">{{ m.text }}</p>
+      }
+    </div>
+  </div>
+
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title text-base">Audit log</h2>
+      <p class="text-xs text-base-content/60">The 50 most recent changes to patient records. The log is append-only.</p>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead><tr><th>When</th><th>Who</th><th>Action</th><th>Record</th></tr></thead>
+          <tbody>
+            @for (e of audit.data(); track e.id) {
+              <tr>
+                <td class="whitespace-nowrap">{{ e.at | date: 'short' }}</td>
+                <td class="font-mono text-xs">{{ e.actor?.slice(0, 8) ?? 'system' }}</td>
+                <td class="capitalize">{{ e.action }}</td>
+                <td>{{ e.table_name }} <span class="font-mono text-xs">{{ e.record_id.slice(0, 8) }}</span></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4" class="text-center text-base-content/60">No changes recorded yet.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

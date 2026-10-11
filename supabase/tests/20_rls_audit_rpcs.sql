@@ -38,7 +38,7 @@ declare
   guest constant uuid := '00000000-0000-0000-0000-0000000000c3';
   org_a uuid; org_b uuid;
   n int; affected int; rec jsonb; page1 patients; page2 patients;
-  new_pid uuid; new_eid uuid; newguest uuid := gen_random_uuid();
+  new_pid uuid; new_eid uuid; newguest uuid := gen_random_uuid(); second_guest uuid := gen_random_uuid();
 begin
   select organization_id into org_a from memberships where user_id = dr_a;
   select organization_id into org_b from memberships where user_id = dr_b;
@@ -189,16 +189,35 @@ begin
   assert (select count(*) from encounters) >= 10 and (select count(*) from observations) >= 70, 'demo encounters + vitals';
   assert (select count(*) from allergies) = 3, 'demo allergies';
   insert into patients (first_name, last_name, date_of_birth, sex) values ('Mine', 'Own', '2001-01-01', 'male');
-  perform pg_temp.expect_error($q$select finish_guest_upgrade(true)$q$, '42501', 'still-anonymous guest cannot finalize upgrade');
+  assert (select is_demo from organizations), 'still a demo workspace while anonymous';
   perform pg_temp.act_as_admin();
   assert (select count(*) from audit_log where organization_id = (select organization_id from memberships where user_id = newguest)) = 0, 'demo orgs are not audited';
 
-  perform pg_temp.act_as_admin();
-  update auth.users set is_anonymous = false, email = 'upgraded@example.com' where id = newguest;  -- what Supabase does on upgrade
-  perform pg_temp.act_as(newguest, false);
+  -- Order 1: email confirmation pending, client cleans up first, upgrade lands later.
+  perform pg_temp.act_as(newguest, true);
   perform finish_guest_upgrade(true);
   assert (select count(*) from patients) = 1 and (select last_name from patients) = 'Own', 'seed data dropped, own data kept';
-  assert not (select is_demo from organizations), 'workspace promoted from demo';
+  perform pg_temp.act_as_admin();
+  update auth.users set is_anonymous = false, email = 'upgraded@example.com' where id = newguest;
+  assert not (select is_demo from organizations o join memberships m on m.organization_id = o.id where m.user_id = newguest), 'workspace promoted by trigger';
+  assert not (select pending_demo_cleanup from organizations o join memberships m on m.organization_id = o.id where m.user_id = newguest), 'nothing left to clean, no stale flag';
+  perform pg_temp.act_as(newguest, false);
+  perform finish_guest_upgrade(false);
+  assert (select count(*) from patients) = 1, 'late call cannot wipe a real practice';
+
+  -- Order 2: upgrade lands first, then the client applies the choice (discard everything).
+  perform pg_temp.act_as_admin();
+  insert into auth.users (id, is_anonymous) values (second_guest, true);
+  perform pg_temp.act_as(second_guest, true);
+  perform seed_demo_workspace();
+  insert into patients (first_name, last_name, date_of_birth, sex) values ('Throw', 'Away', '2001-01-01', 'male');
+  perform pg_temp.act_as_admin();
+  update auth.users set is_anonymous = false, email = 'second@example.com' where id = second_guest;
+  assert (select pending_demo_cleanup from organizations o join memberships m on m.organization_id = o.id where m.user_id = second_guest), 'cleanup flagged while seed rows remain';
+  perform pg_temp.act_as(second_guest, false);
+  perform finish_guest_upgrade(false);
+  assert (select count(*) from patients) = 0, 'start fresh removes seed and own data';
+  assert not (select pending_demo_cleanup from organizations o join memberships m on m.organization_id = o.id where m.user_id = second_guest), 'cleanup is one-shot';
 
   -- --------------------------------------------------------- guest expiry
   perform pg_temp.act_as_admin();
