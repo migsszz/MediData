@@ -9,6 +9,9 @@ import { SupabaseService } from '../../services/supabase.service';
 import { ThemeService } from '../../services/theme.service';
 import { IdleTimeoutService } from '../../services/idle-timeout.service';
 import { UpgradeAccountDialogComponent } from '../upgrade-account-dialog/upgrade-account-dialog.component';
+import { SyncPanelComponent } from './sync-panel.component';
+import { OfflineQueue } from '../../data/offline-queue';
+import { OrgService } from '../../data/org.service';
 
 const SIDEBAR_COLLAPSED_KEY = 'medidata-sidebar-collapsed';
 
@@ -34,6 +37,8 @@ export class ShellComponent implements OnInit, OnDestroy {
   private idleTimeout = inject(IdleTimeoutService);
   protected theme = inject(ThemeService);
   protected isAnonymous = this.supabase.isAnonymous;
+  protected queue = inject(OfflineQueue);
+  protected org = inject(OrgService);
 
   ngOnInit() {
     this.idleTimeout.start();
@@ -72,6 +77,10 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.idleTimeout.stop();
     await this.supabase.signOut();
     this.router.navigateByUrl('/login');
+  }
+
+  openSyncPanel() {
+    this.dialog.open(SyncPanelComponent);
   }
 
   openUpgradeDialog() {

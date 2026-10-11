@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../../services/supabase.service';
-import { DemoDataService } from '../../../services/demo-data.service';
+import { ClinicalApi } from '../../../data/clinical-api';
 
 @Component({
   selector: 'app-login',
@@ -13,7 +13,7 @@ import { DemoDataService } from '../../../services/demo-data.service';
 export class LoginComponent {
   private fb = inject(FormBuilder);
   private supabase = inject(SupabaseService);
-  private demoData = inject(DemoDataService);
+  private api = inject(ClinicalApi);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -79,15 +79,14 @@ export class LoginComponent {
       return;
     }
 
-    this.demoData.seedDemoData(data.user.id).subscribe({
-      next: () => {
-        this.demoLoading.set(false);
-        this.router.navigateByUrl('/dashboard');
-      },
-      error: (err) => {
-        this.demoLoading.set(false);
-        this.errorMessage.set(err?.message ?? 'Could not set up demo data.');
-      }
-    });
+    try {
+      // The server creates this guest's private workspace; seeding is one RPC.
+      await this.api.seedDemoWorkspace();
+      this.router.navigateByUrl('/dashboard');
+    } catch (err) {
+      this.errorMessage.set((err as { message?: string })?.message ?? 'Could not set up demo data.');
+    } finally {
+      this.demoLoading.set(false);
+    }
   }
 }

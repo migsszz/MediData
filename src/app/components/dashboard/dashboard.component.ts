@@ -1,102 +1,64 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-
+import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
-import { forkJoin } from 'rxjs';
-import { PatientService } from '../../services/patient.service';
-import { EncounterService } from '../../services/encounter.service';
-import { Patient } from '../../models/patient.model';
-import { Encounter } from '../../models/encounter.model';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import { ClinicalApi } from '../../data/clinical-api';
+import { OrgService } from '../../data/org.service';
+import { keys } from '../../data/queries';
+import { downloadCsv, toCsv } from '../../util/csv';
 
-function ageFromDob(dob: string): number {
-  const birth = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age;
-}
+type Cohort = 'hypertension' | 'overdue' | null;
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [BaseChartDirective, RouterLink],
   templateUrl: './dashboard.component.html'
 })
-export class DashboardComponent implements OnInit {
-  loading = signal(true);
-  patients = signal<Patient[]>([]);
-  encounters = signal<Encounter[]>([]);
+export class DashboardComponent {
+  private api = inject(ClinicalApi);
+  private org = inject(OrgService);
 
-  totalPatients = computed(() => this.patients().length);
+  // The aggregation happens in Postgres (dashboard_stats); the browser only draws it.
+  stats = injectQuery(() => ({
+    queryKey: keys.dashboard(this.org.orgId() ?? ''),
+    queryFn: () => this.api.dashboard(this.org.orgId()!),
+    enabled: !!this.org.orgId()
+  }));
 
-  averageAge = computed(() => {
-    const list = this.patients();
-    if (!list.length) return 0;
-    const total = list.reduce((sum, p) => sum + ageFromDob(p.date_of_birth), 0);
-    return Math.round(total / list.length);
-  });
+  openCohort = signal<Cohort>(null);
 
-  encountersThisMonth = computed(() => {
-    const now = new Date();
-    return this.encounters().filter((e) => {
-      const d = new Date(e.visit_date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
+  hypertension = injectQuery(() => ({
+    queryKey: keys.hypertension(this.org.orgId() ?? ''),
+    queryFn: () => this.api.hypertensionCohort(this.org.orgId()!),
+    enabled: !!this.org.orgId() && this.openCohort() === 'hypertension'
+  }));
+
+  overdue = injectQuery(() => ({
+    queryKey: keys.overdue(this.org.orgId() ?? ''),
+    queryFn: () => this.api.overdueFollowups(this.org.orgId()!, 12),
+    enabled: !!this.org.orgId() && this.openCohort() === 'overdue'
+  }));
+
+  encountersByMonthData = computed<ChartData<'bar'>>(() => {
+    const rows = this.stats.data()?.encounters_by_month ?? [];
+    return {
+      labels: rows.map((r) => new Date(r.month + 'T00:00:00').toLocaleString('default', { month: 'short', year: '2-digit' })),
+      datasets: [{ data: rows.map((r) => r.count), label: 'Encounters', backgroundColor: '#2563eb' }]
+    };
   });
 
   sexChartData = computed<ChartData<'pie'>>(() => {
-    const counts: Record<string, number> = {};
-    for (const p of this.patients()) {
-      counts[p.sex] = (counts[p.sex] ?? 0) + 1;
-    }
-    return {
-      labels: Object.keys(counts),
-      datasets: [{ data: Object.values(counts) }]
-    };
-  });
-
-  encountersByMonthData = computed<ChartData<'bar'>>(() => {
-    const months: string[] = [];
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(d.toLocaleString('default', { month: 'short', year: '2-digit' }));
-    }
-
-    const counts = new Array(6).fill(0);
-    for (const e of this.encounters()) {
-      const d = new Date(e.visit_date);
-      const diffMonths =
-        (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
-      if (diffMonths >= 0 && diffMonths < 6) {
-        counts[5 - diffMonths]++;
-      }
-    }
-
-    return {
-      labels: months,
-      datasets: [{ data: counts, label: 'Encounters', backgroundColor: '#2563eb' }]
-    };
+    const rows = this.stats.data()?.sex_distribution ?? [];
+    return { labels: rows.map((r) => r.sex), datasets: [{ data: rows.map((r) => r.count) }] };
   });
 
   topDiagnosesData = computed<ChartData<'bar'>>(() => {
-    const counts: Record<string, number> = {};
-    for (const e of this.encounters()) {
-      if (!e.diagnosis) continue;
-      const key = e.diagnosis.trim();
-      if (!key) continue;
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-    const sorted = Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
-
+    const rows = this.stats.data()?.top_diagnoses ?? [];
     return {
-      labels: sorted.map(([label]) => label),
-      datasets: [{ data: sorted.map(([, count]) => count), label: 'Cases', backgroundColor: '#0d9488' }]
+      labels: rows.map((r) => (r.code ? `${r.label} (${r.code})` : r.label)),
+      datasets: [{ data: rows.map((r) => r.count), label: 'Cases', backgroundColor: '#0d9488' }]
     };
   });
 
@@ -106,30 +68,20 @@ export class DashboardComponent implements OnInit {
     plugins: { legend: { display: false } },
     scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
   };
+  horizontalBarOptions: ChartConfiguration['options'] = { ...this.barOptions, indexAxis: 'y' as const };
+  pieOptions: ChartConfiguration['options'] = { responsive: true, maintainAspectRatio: false };
 
-  horizontalBarOptions: ChartConfiguration['options'] = {
-    ...this.barOptions,
-    indexAxis: 'y' as const
-  };
+  toggleCohort(c: Exclude<Cohort, null>) {
+    this.openCohort.set(this.openCohort() === c ? null : c);
+  }
 
-  pieOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: false
-  };
+  exportHypertension() {
+    const rows = (this.hypertension.data() ?? []).map((r) => [r.last_name, r.first_name, r.systolic, r.diastolic, r.observed_at.slice(0, 10)]);
+    downloadCsv('hypertension-cohort.csv', toCsv(['Last name', 'First name', 'Systolic', 'Diastolic', 'Measured'], rows));
+  }
 
-  constructor(private patientService: PatientService, private encounterService: EncounterService) {}
-
-  ngOnInit() {
-    forkJoin({
-      patients: this.patientService.list(),
-      encounters: this.encounterService.listAll()
-    }).subscribe({
-      next: ({ patients, encounters }) => {
-        this.patients.set(patients);
-        this.encounters.set(encounters);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
+  exportOverdue() {
+    const rows = (this.overdue.data() ?? []).map((r) => [r.last_name, r.first_name, r.last_visit ?? 'never']);
+    downloadCsv('overdue-followups.csv', toCsv(['Last name', 'First name', 'Last visit'], rows));
   }
 }

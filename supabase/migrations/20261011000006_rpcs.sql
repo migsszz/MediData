@@ -200,9 +200,13 @@ $$;
 revoke all on function public.seed_demo_workspace() from public, anon;
 grant execute on function public.seed_demo_workspace() to authenticated;
 
--- Called right after a guest upgrades to a real account. Seeded demo rows are
--- always dropped; the guest's own rows are kept unless they chose to discard
--- them. The workspace is then promoted to a normal (audited, non-expiring) one.
+-- Called by the client after a guest upgrades to a real account. The
+-- database has already promoted the workspace (handle_user_upgraded); this
+-- applies the user's choice about their demo data, once: seeded sample rows
+-- are always dropped, and the guest's own rows are kept unless they chose to
+-- discard them. Deleting a patient cascades to its encounters, observations,
+-- allergies and medications. Does nothing for a workspace with no pending
+-- cleanup, so it can't be used to wipe a real practice's records.
 create or replace function public.finish_guest_upgrade(keep_own_data boolean)
 returns void
 language plpgsql security definer set search_path = public
@@ -210,16 +214,15 @@ as $$
 declare
   org uuid := public.current_org_id();
 begin
-  if auth.uid() is null or coalesce((auth.jwt() ->> 'is_anonymous')::boolean, false) then
-    raise exception 'Finish creating your account before upgrading the workspace' using errcode = 'insufficient_privilege';
+  if auth.uid() is null or org is null or not public.has_role(org, 'admin') then
+    return;
   end if;
-  if org is null or not public.has_role(org, 'admin') then
+  if not exists (select 1 from organizations where id = org and (pending_demo_cleanup or is_demo)) then
     return;
   end if;
 
-  -- Deleting a patient cascades to its encounters, observations, allergies and medications.
   delete from patients where organization_id = org and (is_seed or not keep_own_data);
-  update organizations set is_demo = false, name = 'My practice' where id = org and is_demo;
+  update organizations set pending_demo_cleanup = false where id = org;
 end
 $$;
 revoke all on function public.finish_guest_upgrade(boolean) from public, anon;

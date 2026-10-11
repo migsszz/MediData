@@ -1,0 +1,105 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-3" aria-label="New encounter">
+  @if (draftRestored()) {
+    <div role="status" class="alert alert-info alert-soft py-2">
+      <span class="flex-1">Restored your unsaved draft.</span>
+      <button type="button" class="btn btn-xs btn-ghost" (click)="discardDraft()">Discard draft</button>
+    </div>
+  }
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
+    <fieldset class="fieldset">
+      <label class="label" for="enc-date">Visit date</label>
+      <input id="enc-date" class="input w-full" type="date" formControlName="visit_date" />
+      @if (message(form.controls.visit_date, 'Visit date'); as m) {
+        <p class="text-error text-xs" role="alert">{{ m }}</p>
+      }
+    </fieldset>
+
+    <fieldset class="fieldset sm:col-span-2">
+      <label class="label" for="enc-reason">Reason for visit</label>
+      <input #reason id="enc-reason" class="input w-full" formControlName="reason" />
+      @if (message(form.controls.reason, 'Reason'); as m) {
+        <p class="text-error text-xs" role="alert">{{ m }}</p>
+      }
+      <div class="flex flex-wrap gap-1 mt-1">
+        @for (p of presets; track p) {
+          <button type="button" class="btn btn-xs btn-soft" tabindex="-1" (click)="usePreset(p)">{{ p }}</button>
+        }
+      </div>
+    </fieldset>
+  </div>
+
+  <fieldset formGroupName="vitals" class="border border-base-300 rounded-box p-3">
+    <legend class="px-1 text-sm font-medium">Vitals</legend>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-1">
+      @for (v of vitals; track v.key) {
+        <fieldset class="fieldset">
+          <label class="label" [for]="'vital-' + v.key">{{ v.label }} ({{ v.unit }})</label>
+          <input
+            [id]="'vital-' + v.key"
+            class="input w-full"
+            type="number"
+            inputmode="decimal"
+            [step]="v.step"
+            [formControlName]="v.key"
+          />
+          @if (vitalError(v.key); as m) {
+            <p class="text-error text-xs" role="alert">{{ m }}</p>
+          }
+        </fieldset>
+      }
+    </div>
+    @if (bpError; as m) {
+      <p class="text-error text-xs mt-1" role="alert">{{ m }}</p>
+    }
+  </fieldset>
+
+  <fieldset class="border border-base-300 rounded-box p-3" formArrayName="diagnoses">
+    <legend class="px-1 text-sm font-medium">Diagnoses</legend>
+    @for (row of diagnoses.controls; track row; let i = $index) {
+      <div class="flex items-start gap-2 mb-2" [formGroupName]="i">
+        <div class="flex-1">
+          <app-typeahead
+            [control]="row.controls.description"
+            [search]="searchIcd"
+            [label]="'Diagnosis ' + (i + 1)"
+            placeholder="Search ICD-10 or type a free-text diagnosis"
+            (selected)="pickIcd(i, $event)"
+            (edited)="clearCode(i)"
+          />
+          @if (row.value.icd10_code) {
+            <span class="badge badge-sm badge-soft mt-1">ICD-10 {{ row.value.icd10_code }}</span>
+          }
+        </div>
+        <label class="label cursor-pointer gap-1 mt-2">
+          <input type="radio" class="radio radio-sm" name="primary-dx" [checked]="row.value.is_primary" (change)="setPrimary(i)" />
+          <span class="text-xs">Primary</span>
+        </label>
+        <button type="button" class="btn btn-ghost btn-sm btn-circle" (click)="removeDiagnosis(i)" [attr.aria-label]="'Remove diagnosis ' + (i + 1)">
+          <span class="material-icons text-lg">close</span>
+        </button>
+      </div>
+    }
+    <button type="button" class="btn btn-sm btn-ghost" (click)="addDiagnosis()">
+      <span class="material-icons text-lg">add</span>
+      Add diagnosis
+    </button>
+  </fieldset>
+
+  <fieldset class="fieldset">
+    <label class="label" for="enc-notes">Notes</label>
+    <textarea id="enc-notes" class="textarea w-full" formControlName="notes" rows="3"></textarea>
+  </fieldset>
+
+  @if (errorText()) {
+    <p class="text-error text-sm" role="alert">{{ errorText() }}</p>
+  }
+
+  <div class="flex items-center justify-end gap-2">
+    <span class="text-xs text-base-content/50 hidden sm:inline">Ctrl/&#8984; + Enter to save</span>
+    <button type="button" class="btn btn-ghost" (click)="cancelled.emit()">Cancel</button>
+    <button type="submit" class="btn btn-primary" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : 'Save encounter' }}
+    </button>
+  </div>
+</form>

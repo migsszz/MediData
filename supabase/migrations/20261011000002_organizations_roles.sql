@@ -24,7 +24,10 @@ create table organizations (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   name text not null check (length(trim(name)) > 0),
-  is_demo boolean not null default false
+  is_demo boolean not null default false,
+  -- Set when a guest upgrades to a real account, until they've chosen what to
+  -- do with their demo data (see finish_guest_upgrade()).
+  pending_demo_cleanup boolean not null default false
 );
 
 create table memberships (
@@ -93,6 +96,32 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- A guest who upgrades (Supabase flips auth.users.is_anonymous to false once
+-- the email is confirmed) keeps the same user and workspace: promote the
+-- workspace from demo to a normal one, and flag that demo data may need
+-- cleaning up. Doing this in the database means it happens exactly once and
+-- regardless of whether the client is still open.
+create or replace function public.handle_user_upgraded()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  -- Only flag cleanup if sample data is still there to clean (the client may
+  -- already have run finish_guest_upgrade() while confirmation was pending).
+  update organizations o
+  set is_demo = false, name = 'My practice',
+      pending_demo_cleanup = exists (select 1 from patients p where p.organization_id = o.id and p.is_seed)
+  where o.is_demo and o.id in (select organization_id from memberships where user_id = new.id);
+  return new;
+end
+$$;
+
+drop trigger if exists on_auth_user_upgraded on auth.users;
+create trigger on_auth_user_upgraded
+  after update of is_anonymous on auth.users
+  for each row when (old.is_anonymous is true and new.is_anonymous is false)
+  execute function public.handle_user_upgraded();
 
 -- ---------------------------------------------------------------------------
 -- Move existing data into organizations.

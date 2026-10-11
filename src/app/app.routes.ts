@@ -6,6 +6,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { PatientListComponent } from './components/patients/patient-list/patient-list.component';
 import { PatientFormComponent } from './components/patients/patient-form/patient-form.component';
 import { PatientDetailComponent } from './components/patients/patient-detail/patient-detail.component';
+import { SettingsComponent } from './components/settings/settings.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -19,7 +20,8 @@ export const routes: Routes = [
       { path: 'patients', component: PatientListComponent },
       { path: 'patients/new', component: PatientFormComponent },
       { path: 'patients/:id', component: PatientDetailComponent },
-      { path: 'patients/:id/edit', component: PatientFormComponent }
+      { path: 'patients/:id/edit', component: PatientFormComponent },
+      { path: 'settings', component: SettingsComponent }
     ]
   },
   { path: '**', redirectTo: '' }

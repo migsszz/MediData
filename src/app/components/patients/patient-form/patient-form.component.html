@@ -1,6 +1,6 @@
 <h1 class="text-2xl font-bold mb-4">{{ patientId() ? 'Edit patient' : 'Add patient' }}</h1>
 
-@if (loading()) {
+@if (existing.isPending() && patientId()) {
   <div class="flex justify-center py-12">
     <span class="loading loading-spinner loading-lg"></span>
   </div>
@@ -12,16 +12,25 @@
           <fieldset class="fieldset">
             <label class="label" for="pf-first-name">First name</label>
             <input id="pf-first-name" class="input w-full" formControlName="first_name" />
+            @if (message(form.controls.first_name, 'First name'); as m) {
+              <p class="text-error text-xs" role="alert">{{ m }}</p>
+            }
           </fieldset>
 
           <fieldset class="fieldset">
             <label class="label" for="pf-last-name">Last name</label>
             <input id="pf-last-name" class="input w-full" formControlName="last_name" />
+            @if (message(form.controls.last_name, 'Last name'); as m) {
+              <p class="text-error text-xs" role="alert">{{ m }}</p>
+            }
           </fieldset>
 
           <fieldset class="fieldset">
             <label class="label" for="pf-dob">Date of birth</label>
             <input id="pf-dob" class="input w-full" type="date" formControlName="date_of_birth" />
+            @if (message(form.controls.date_of_birth, 'Date of birth'); as m) {
+              <p class="text-error text-xs" role="alert">{{ m }}</p>
+            }
           </fieldset>
 
           <fieldset class="fieldset">
@@ -41,21 +50,27 @@
           <fieldset class="fieldset">
             <label class="label" for="pf-email">Email</label>
             <input id="pf-email" class="input w-full" type="email" formControlName="email" />
+            @if (message(form.controls.email, 'Email'); as m) {
+              <p class="text-error text-xs" role="alert">{{ m }}</p>
+            }
           </fieldset>
 
           <fieldset class="fieldset">
             <label class="label" for="pf-blood-type">Blood type</label>
-            <input id="pf-blood-type" class="input w-full" formControlName="blood_type" placeholder="e.g. O+" />
+            <input id="pf-blood-type" class="input w-full" formControlName="blood_type" placeholder="e.g. O+" list="pf-blood-types" />
+            <datalist id="pf-blood-types">
+              @for (t of bloodTypes; track t) {
+                <option [value]="t"></option>
+              }
+            </datalist>
+            @if (message(form.controls.blood_type, 'Blood type'); as m) {
+              <p class="text-error text-xs" role="alert">{{ m }}</p>
+            }
           </fieldset>
 
           <fieldset class="fieldset sm:col-span-2">
             <label class="label" for="pf-address">Address</label>
             <input id="pf-address" class="input w-full" formControlName="address" />
-          </fieldset>
-
-          <fieldset class="fieldset sm:col-span-2">
-            <label class="label" for="pf-allergies">Allergies</label>
-            <textarea id="pf-allergies" class="textarea w-full" formControlName="allergies" rows="2"></textarea>
           </fieldset>
 
           <fieldset class="fieldset sm:col-span-2">

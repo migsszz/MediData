@@ -1,9 +1,12 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { PatientService } from '../../../services/patient.service';
+import { injectInfiniteQuery, injectMutation, QueryClient } from '@tanstack/angular-query-experimental';
+import { ClinicalApi, PAGE_SIZE, PatientCursor } from '../../../data/clinical-api';
+import { OrgService } from '../../../data/org.service';
+import { cursorOf, keys } from '../../../data/queries';
 import { DeleteGuardService } from '../../../services/delete-guard.service';
-import { Patient } from '../../../models/patient.model';
+import type { Patient } from '../../../models/patient.model';
 
 @Component({
   selector: 'app-patient-list',
@@ -11,51 +14,46 @@ import { Patient } from '../../../models/patient.model';
   imports: [DatePipe, RouterLink],
   templateUrl: './patient-list.component.html'
 })
-export class PatientListComponent implements OnInit {
-  private patientService = inject(PatientService);
+export class PatientListComponent {
+  private api = inject(ClinicalApi);
+  protected org = inject(OrgService);
   private deleteGuard = inject(DeleteGuardService);
+  private queryClient = inject(QueryClient);
 
-  patients = signal<Patient[]>([]);
-  loading = signal(true);
-  searchTerm = signal('');
+  /** What the box shows vs. what we've actually searched for (debounced). */
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  protected term = signal('');
 
-  filteredPatients = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    if (!term) return this.patients();
-    return this.patients().filter((p) =>
-      `${p.first_name} ${p.last_name}`.toLowerCase().includes(term)
-    );
-  });
+  // Search and paging are done by Postgres (search_patients, keyset on last/first/id).
+  patients = injectInfiniteQuery(() => ({
+    queryKey: keys.patients(this.org.orgId() ?? '', this.term()),
+    initialPageParam: null as PatientCursor | null,
+    queryFn: ({ pageParam }) => this.api.searchPatients(this.org.orgId()!, this.term(), pageParam),
+    getNextPageParam: (last: Patient[]) => (last.length === PAGE_SIZE ? cursorOf(last[last.length - 1]) : undefined),
+    enabled: !!this.org.orgId()
+  }));
 
-  ngOnInit() {
-    this.refresh();
-  }
+  rows = computed(() => this.patients.data()?.pages.flat() ?? []);
 
-  refresh() {
-    this.patientService.list().subscribe({
-      next: (patients) => {
-        this.patients.set(patients);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
-    });
-  }
+  archive = injectMutation(() => ({
+    mutationFn: (id: string) => this.api.archivePatient(id),
+    onSuccess: () => this.queryClient.invalidateQueries({ queryKey: ['patients'] })
+  }));
 
   onSearchChange(value: string) {
-    this.searchTerm.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => this.term.set(value.trim()), 250);
   }
 
-  async deletePatient(p: Patient, event: Event) {
+  async archivePatient(p: Patient, event: Event) {
     event.stopPropagation();
     event.preventDefault();
 
-    const proceed = await this.deleteGuard.confirmDelete(
+    const proceed = await this.deleteGuard.confirmArchive(
       p.is_seed,
       `${p.first_name} ${p.last_name}`,
-      'This also deletes all of their encounters and medications.'
+      'Their encounters and medications are hidden with them.'
     );
-    if (!proceed) return;
-
-    this.patientService.delete(p.id).subscribe(() => this.refresh());
+    if (proceed) this.archive.mutate(p.id);
   }
 }

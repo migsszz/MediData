@@ -1,195 +1,179 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
-import { PatientService } from '../../../services/patient.service';
-import { EncounterService } from '../../../services/encounter.service';
-import { MedicationService } from '../../../services/medication.service';
-import { SupabaseService } from '../../../services/supabase.service';
+import { injectMutation, injectQuery, QueryClient } from '@tanstack/angular-query-experimental';
+import { ClinicalApi } from '../../../data/clinical-api';
+import { OrgService } from '../../../data/org.service';
+import { keys } from '../../../data/queries';
 import { DeleteGuardService } from '../../../services/delete-guard.service';
-import { Patient } from '../../../models/patient.model';
-import { Encounter } from '../../../models/encounter.model';
-import { Medication } from '../../../models/medication.model';
+import { ageFromDob } from '../../../util/age';
+import { VITALS, VITAL_BY_CODE } from '../../../models/vitals';
+import type { Encounter, EncounterWithDetails } from '../../../models/encounter.model';
+import type { Medication } from '../../../models/medication.model';
+import type { Allergy } from '../../../models/allergy.model';
+import { SparklineComponent } from '../../ui/sparkline.component';
+import { EncounterFormComponent } from '../chart/encounter-form.component';
+import { MedicationFormComponent } from '../chart/medication-form.component';
+import { AllergyFormComponent } from '../chart/allergy-form.component';
 
-function ageFromDob(dob: string): number {
-  const birth = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age;
+type Tab = 'timeline' | 'medications' | 'allergies';
+type TimelineItem =
+  | { kind: 'encounter'; date: string; encounter: EncounterWithDetails }
+  | { kind: 'med-start' | 'med-stop'; date: string; medication: Medication };
+
+interface VitalTrend {
+  code: string;
+  label: string;
+  unit: string;
+  values: number[];
+  latest: string;
+  delta: number | null;
+  /** The reading's date, so a stale value is visibly stale. */
+  at: string;
 }
 
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, RouterLink, SparklineComponent, EncounterFormComponent, MedicationFormComponent, AllergyFormComponent],
   templateUrl: './patient-detail.component.html'
 })
-export class PatientDetailComponent implements OnInit {
-  private fb = inject(FormBuilder);
+export class PatientDetailComponent {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private patientService = inject(PatientService);
-  private encounterService = inject(EncounterService);
-  private medicationService = inject(MedicationService);
-  private supabase = inject(SupabaseService);
+  private api = inject(ClinicalApi);
   private deleteGuard = inject(DeleteGuardService);
+  private queryClient = inject(QueryClient);
+  protected org = inject(OrgService);
 
-  patient = signal<Patient | null>(null);
-  encounters = signal<Encounter[]>([]);
-  medications = signal<Medication[]>([]);
-  loading = signal(true);
-  savingEncounter = signal(false);
-  savingMedication = signal(false);
+  protected patientId = this.route.snapshot.paramMap.get('id')!;
 
-  activeTab = signal<'encounters' | 'medications'>('encounters');
-  showEncounterForm = signal(false);
-  showMedicationForm = signal(false);
+  activeTab = signal<Tab>('timeline');
+  form = signal<'encounter' | 'medication' | 'allergy' | null>(null);
+  notice = signal<string | null>(null);
 
-  encounterForm = this.fb.group({
-    visit_date: [new Date().toISOString().slice(0, 10), Validators.required],
-    reason: ['', Validators.required],
-    diagnosis: [''],
-    notes: [''],
-    blood_pressure_systolic: [null as number | null],
-    blood_pressure_diastolic: [null as number | null],
-    heart_rate: [null as number | null],
-    temperature_c: [null as number | null],
-    weight_kg: [null as number | null],
-    height_cm: [null as number | null],
-    spo2: [null as number | null]
+  patient = injectQuery(() => ({ queryKey: keys.patient(this.patientId), queryFn: () => this.api.getPatient(this.patientId) }));
+  encounters = injectQuery(() => ({ queryKey: keys.encounters(this.patientId), queryFn: () => this.api.listEncounters(this.patientId) }));
+  observations = injectQuery(() => ({ queryKey: keys.observations(this.patientId), queryFn: () => this.api.listObservations(this.patientId) }));
+  medications = injectQuery(() => ({ queryKey: keys.medications(this.patientId), queryFn: () => this.api.listMedications(this.patientId) }));
+  allergies = injectQuery(() => ({ queryKey: keys.allergies(this.patientId), queryFn: () => this.api.listAllergies(this.patientId) }));
+  diagnoses = injectQuery(() => {
+    const ids = (this.encounters.data() ?? []).map((e) => e.id);
+    return {
+      queryKey: keys.diagnoses(this.patientId, ids),
+      queryFn: () => this.api.listDiagnoses(ids),
+      enabled: this.encounters.isSuccess()
+    };
   });
 
-  medicationForm = this.fb.group({
-    name: ['', Validators.required],
-    dosage: ['', Validators.required],
-    frequency: ['', Validators.required],
-    start_date: [new Date().toISOString().slice(0, 10), Validators.required],
-    end_date: [null as string | null],
-    active: [true]
-  });
-
-  get patientId(): string {
-    return this.route.snapshot.paramMap.get('id')!;
-  }
-
-  get age(): number | null {
-    const p = this.patient();
+  age = computed(() => {
+    const p = this.patient.data();
     return p ? ageFromDob(p.date_of_birth) : null;
-  }
+  });
 
-  ngOnInit() {
-    const id = this.patientId;
-    this.patientService.get(id).subscribe((patient) => {
-      this.patient.set(patient);
-      this.loading.set(false);
-    });
-    this.refreshEncounters();
-    this.refreshMedications();
-  }
+  activeAllergies = computed(() => (this.allergies.data() ?? []).filter((a) => a.active));
+  severeAllergies = computed(() => this.activeAllergies().filter((a) => a.severity === 'severe'));
+  activeMedications = computed(() =>
+    (this.medications.data() ?? []).filter((m) => m.active && (!m.end_date || m.end_date >= new Date().toISOString().slice(0, 10)))
+  );
 
-  refreshEncounters() {
-    this.encounterService.listForPatient(this.patientId).subscribe((encounters) => {
-      this.encounters.set(encounters);
-    });
-  }
+  encountersDetailed = computed<EncounterWithDetails[]>(() => {
+    const dx = this.diagnoses.data() ?? [];
+    const obs = this.observations.data() ?? [];
+    return (this.encounters.data() ?? []).map((e) => ({
+      ...e,
+      diagnoses: dx.filter((d) => d.encounter_id === e.id),
+      vitals: obs.filter((o) => o.encounter_id === e.id)
+    }));
+  });
 
-  refreshMedications() {
-    this.medicationService.listForPatient(this.patientId).subscribe((medications) => {
-      this.medications.set(medications);
-    });
-  }
+  timeline = computed<TimelineItem[]>(() => {
+    const items: TimelineItem[] = this.encountersDetailed().map((encounter) => ({ kind: 'encounter', date: encounter.visit_date, encounter }));
+    for (const m of this.medications.data() ?? []) {
+      items.push({ kind: 'med-start', date: m.start_date, medication: m });
+      if (m.end_date) items.push({ kind: 'med-stop', date: m.end_date, medication: m });
+    }
+    return items.sort((a, b) => b.date.localeCompare(a.date));
+  });
 
-  addEncounter() {
-    if (this.encounterForm.invalid) return;
-    this.savingEncounter.set(true);
-
-    this.encounterService
-      .create({
-        ...(this.encounterForm.getRawValue() as any),
-        patient_id: this.patientId,
-        created_by: this.supabase.currentSession?.user.id ?? null
-      })
-      .subscribe({
-        next: () => {
-          this.savingEncounter.set(false);
-          this.showEncounterForm.set(false);
-          this.encounterForm.reset({
-            visit_date: new Date().toISOString().slice(0, 10),
-            reason: '',
-            diagnosis: '',
-            notes: '',
-            blood_pressure_systolic: null,
-            blood_pressure_diastolic: null,
-            heart_rate: null,
-            temperature_c: null,
-            weight_kg: null,
-            height_cm: null,
-            spo2: null
-          });
-          this.refreshEncounters();
-        },
-        error: () => this.savingEncounter.set(false)
+  /** One trend per vital that has data; blood pressure is shown as a single systolic/diastolic card. */
+  trends = computed<VitalTrend[]>(() => {
+    const obs = this.observations.data() ?? [];
+    const out: VitalTrend[] = [];
+    for (const def of VITALS) {
+      if (def.key === 'diastolic' || def.key === 'height') continue;
+      const series = obs.filter((o) => o.type_code === def.code);
+      if (!series.length) continue;
+      const last = series[series.length - 1];
+      const prev = series.length > 1 ? series[series.length - 2] : null;
+      let latest = `${last.value}`;
+      if (def.key === 'systolic') {
+        const dia = obs.filter((o) => o.type_code === '8462-4' && o.encounter_id === last.encounter_id).at(-1);
+        if (dia) latest = `${last.value}/${dia.value}`;
+      }
+      out.push({
+        code: def.code,
+        label: def.key === 'systolic' ? 'Blood pressure' : def.label,
+        unit: def.unit,
+        values: series.map((o) => o.value),
+        latest,
+        delta: prev ? Math.round((last.value - prev.value) * 10) / 10 : null,
+        at: last.observed_at
       });
+    }
+    return out;
+  });
+
+  vitalLabel(code: string) {
+    return VITAL_BY_CODE.get(code);
   }
 
-  addMedication() {
-    if (this.medicationForm.invalid) return;
-    this.savingMedication.set(true);
-
-    this.medicationService
-      .create({
-        ...(this.medicationForm.getRawValue() as any),
-        patient_id: this.patientId,
-        created_by: this.supabase.currentSession?.user.id ?? null
-      })
-      .subscribe({
-        next: () => {
-          this.savingMedication.set(false);
-          this.showMedicationForm.set(false);
-          this.medicationForm.reset({
-            name: '',
-            dosage: '',
-            frequency: '',
-            start_date: new Date().toISOString().slice(0, 10),
-            end_date: null,
-            active: true
-          });
-          this.refreshMedications();
-        },
-        error: () => this.savingMedication.set(false)
-      });
+  vitalsSummary(e: EncounterWithDetails): string[] {
+    const by = new Map(e.vitals.map((v) => [v.type_code, v.value]));
+    const parts: string[] = [];
+    if (by.has('8480-6') && by.has('8462-4')) parts.push(`BP ${by.get('8480-6')}/${by.get('8462-4')}`);
+    else if (by.has('8480-6')) parts.push(`SBP ${by.get('8480-6')}`);
+    for (const def of VITALS.filter((v) => !['systolic', 'diastolic'].includes(v.key))) {
+      if (by.has(def.code)) parts.push(`${def.short} ${by.get(def.code)} ${def.unit}`);
+    }
+    return parts;
   }
 
-  async deletePatient() {
-    const p = this.patient();
+  onSaved(outcome: 'saved' | 'queued', what: string) {
+    this.form.set(null);
+    this.notice.set(outcome === 'queued' ? `${what} saved on this device. It will sync when you're back online.` : `${what} saved.`);
+    setTimeout(() => this.notice.set(null), 5000);
+  }
+
+  private invalidate = () => this.queryClient.invalidateQueries({ queryKey: ['patient', this.patientId] });
+
+  archivePatientMutation = injectMutation(() => ({
+    mutationFn: () => this.api.archivePatient(this.patientId),
+    onSuccess: async () => {
+      await this.queryClient.invalidateQueries({ queryKey: ['patients'] });
+      this.router.navigateByUrl('/patients');
+    }
+  }));
+  archiveEncounterMutation = injectMutation(() => ({ mutationFn: (id: string) => this.api.archiveEncounter(id), onSuccess: this.invalidate }));
+  archiveMedicationMutation = injectMutation(() => ({ mutationFn: (id: string) => this.api.archiveMedication(id), onSuccess: this.invalidate }));
+  archiveAllergyMutation = injectMutation(() => ({ mutationFn: (id: string) => this.api.archiveAllergy(id), onSuccess: this.invalidate }));
+
+  async archivePatient() {
+    const p = this.patient.data();
     if (!p) return;
-
-    const proceed = await this.deleteGuard.confirmDelete(
-      p.is_seed,
-      `${p.first_name} ${p.last_name}`,
-      'This also deletes all of their encounters and medications.'
-    );
-    if (!proceed) return;
-
-    this.patientService.delete(p.id).subscribe(() => this.router.navigateByUrl('/patients'));
+    const ok = await this.deleteGuard.confirmArchive(p.is_seed, `${p.first_name} ${p.last_name}`, 'Their encounters, medications and allergies are hidden with them.');
+    if (ok) this.archivePatientMutation.mutate();
   }
 
-  async deleteEncounter(e: Encounter) {
-    const proceed = await this.deleteGuard.confirmDelete(e.is_seed, `the encounter from ${e.visit_date}`);
-    if (!proceed) return;
-
-    this.encounterService.delete(e.id).subscribe(() => this.refreshEncounters());
+  async archiveEncounter(e: Encounter) {
+    if (await this.deleteGuard.confirmArchive(e.is_seed, `the encounter from ${e.visit_date}`)) this.archiveEncounterMutation.mutate(e.id);
   }
 
-  async deleteMedication(m: Medication) {
-    const proceed = await this.deleteGuard.confirmDelete(m.is_seed, m.name);
-    if (!proceed) return;
+  async archiveMedication(m: Medication) {
+    if (await this.deleteGuard.confirmArchive(m.is_seed, m.name)) this.archiveMedicationMutation.mutate(m.id);
+  }
 
-    this.medicationService.delete(m.id).subscribe(() => this.refreshMedications());
+  async archiveAllergy(a: Allergy) {
+    if (await this.deleteGuard.confirmArchive(false, `the ${a.substance} allergy`)) this.archiveAllergyMutation.mutate(a.id);
   }
 }

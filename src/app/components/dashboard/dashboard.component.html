@@ -1,22 +1,101 @@
 <h1 class="text-2xl font-bold mb-4">Dashboard</h1>
 
-@if (loading()) {
+@if (stats.isPending()) {
   <div class="flex justify-center py-12">
     <span class="loading loading-spinner loading-lg"></span>
   </div>
-} @else {
-  <div class="stats stats-vertical sm:stats-horizontal shadow w-full mb-6 bg-base-100">
+} @else if (stats.isError()) {
+  <div role="alert" class="alert alert-error">Couldn't load the dashboard. {{ stats.error().message }}</div>
+} @else if (stats.data(); as s) {
+  <div class="stats stats-vertical lg:stats-horizontal shadow w-full mb-6 bg-base-100">
     <div class="stat place-items-center">
-      <div class="stat-value">{{ totalPatients() }}</div>
+      <div class="stat-value">{{ s.total_patients }}</div>
       <div class="stat-title">Total patients</div>
     </div>
     <div class="stat place-items-center">
-      <div class="stat-value">{{ encountersThisMonth() }}</div>
+      <div class="stat-value">{{ s.encounters_this_month }}</div>
       <div class="stat-title">Encounters this month</div>
     </div>
     <div class="stat place-items-center">
-      <div class="stat-value">{{ averageAge() }}</div>
+      <div class="stat-value">{{ s.average_age }}</div>
       <div class="stat-title">Average patient age</div>
+    </div>
+    <div class="stat place-items-center">
+      <div class="stat-value">{{ s.active_medications }}</div>
+      <div class="stat-title">Active medications</div>
+    </div>
+  </div>
+
+  <h2 class="text-lg font-semibold mb-2">Follow-up cohorts</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-3xl font-bold">{{ s.hypertension_count }}</div>
+            <div class="text-sm text-base-content/70">Latest blood pressure &ge; 140/90</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" (click)="toggleCohort('hypertension')" [attr.aria-expanded]="openCohort() === 'hypertension'">
+            {{ openCohort() === 'hypertension' ? 'Hide' : 'Show patients' }}
+          </button>
+        </div>
+        @if (openCohort() === 'hypertension') {
+          @if (hypertension.isPending()) {
+            <span class="loading loading-spinner"></span>
+          } @else {
+            <ul class="menu">
+              @for (r of hypertension.data(); track r.patient_id) {
+                <li>
+                  <a [routerLink]="['/patients', r.patient_id]">
+                    {{ r.last_name }}, {{ r.first_name }}
+                    <span class="badge badge-error badge-soft">{{ r.systolic }}/{{ r.diastolic ?? '?' }}</span>
+                  </a>
+                </li>
+              } @empty {
+                <li class="text-sm text-base-content/60 px-3 py-2">No patients in this cohort.</li>
+              }
+            </ul>
+            @if (hypertension.data()?.length) {
+              <button type="button" class="btn btn-sm btn-ghost self-start" (click)="exportHypertension()">Export CSV</button>
+            }
+          }
+        }
+      </div>
+    </div>
+
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <div class="text-3xl font-bold">{{ s.overdue_followup_count }}</div>
+            <div class="text-sm text-base-content/70">No visit in the last 12 months</div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" (click)="toggleCohort('overdue')" [attr.aria-expanded]="openCohort() === 'overdue'">
+            {{ openCohort() === 'overdue' ? 'Hide' : 'Show patients' }}
+          </button>
+        </div>
+        @if (openCohort() === 'overdue') {
+          @if (overdue.isPending()) {
+            <span class="loading loading-spinner"></span>
+          } @else {
+            <ul class="menu">
+              @for (r of overdue.data(); track r.patient_id) {
+                <li>
+                  <a [routerLink]="['/patients', r.patient_id]">
+                    {{ r.last_name }}, {{ r.first_name }}
+                    <span class="badge badge-soft">{{ r.last_visit ?? 'never seen' }}</span>
+                  </a>
+                </li>
+              } @empty {
+                <li class="text-sm text-base-content/60 px-3 py-2">Everyone has been seen recently.</li>
+              }
+            </ul>
+            @if (overdue.data()?.length) {
+              <button type="button" class="btn btn-sm btn-ghost self-start" (click)="exportOverdue()">Export CSV</button>
+            }
+          }
+        }
+      </div>
     </div>
   </div>
 

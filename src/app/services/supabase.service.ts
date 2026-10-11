@@ -1,11 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
+import type { Database } from '../data/database.types';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
-  readonly client: SupabaseClient;
+  readonly client: SupabaseClient<Database>;
   readonly session$ = new BehaviorSubject<Session | null>(null);
 
   /**
@@ -23,7 +24,7 @@ export class SupabaseService {
   readonly isAnonymous = computed(() => this.sessionSignal()?.user?.is_anonymous === true);
 
   constructor() {
-    this.client = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
+    this.client = createClient<Database>(environment.supabaseUrl, environment.supabaseAnonKey);
 
     this.client.auth.getSession().then(({ data }) => {
       this.session$.next(data.session);
