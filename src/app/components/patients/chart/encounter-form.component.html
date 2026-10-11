@@ -76,12 +76,12 @@
           <span class="text-xs">Primary</span>
         </label>
         <button type="button" class="btn btn-ghost btn-sm btn-circle" (click)="removeDiagnosis(i)" [attr.aria-label]="'Remove diagnosis ' + (i + 1)">
-          <span class="material-icons text-lg">close</span>
+          <app-icon name="close" />
         </button>
       </div>
     }
     <button type="button" class="btn btn-sm btn-ghost" (click)="addDiagnosis()">
-      <span class="material-icons text-lg">add</span>
+      <app-icon name="add" />
       Add diagnosis
     </button>
   </fieldset>

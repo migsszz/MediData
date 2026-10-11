@@ -3,78 +3,242 @@
   themes: false;
 }
 
+/*
+ * Three switchable styles x light/dark = six DaisyUI themes. data-theme picks
+ * the palette and shape (radius, control size); data-style (set alongside it
+ * by ThemeService) drives everything a theme can't express: fonts, density,
+ * borders vs shadows, icon weight. Both live on <html>.
+ */
+
 @plugin 'daisyui/theme' {
-  name: 'medidata-light';
+  name: 'editorial-light';
   default: true;
   prefersdark: false;
   color-scheme: light;
 
-  --color-base-100: #ffffff;
-  --color-base-200: #f3f4f8;
-  --color-base-300: #e5e7ee;
-  --color-base-content: #1c1e26;
-  --color-primary: #2563eb;
-  --color-primary-content: #ffffff;
-  --color-secondary: #0d9488;
-  --color-secondary-content: #ffffff;
-  --color-accent: #7c3aed;
-  --color-accent-content: #ffffff;
-  --color-neutral: #374151;
-  --color-neutral-content: #f9fafb;
-  --color-info: #0284c7;
+  --color-base-100: #fdfbf7;
+  --color-base-200: #f5f1ea;
+  --color-base-300: #e3dccf;
+  --color-base-content: #26231f;
+  --color-primary: #1f5f5b;
+  --color-primary-content: #f4f1ea;
+  --color-secondary: #8a5a44;
+  --color-secondary-content: #fdfbf7;
+  --color-accent: #a15c38;
+  --color-accent-content: #fdfbf7;
+  --color-neutral: #2f2b26;
+  --color-neutral-content: #f5f1ea;
+  --color-info: #2b6a8a;
   --color-info-content: #ffffff;
-  --color-success: #16a34a;
+  --color-success: #3f7d58;
   --color-success-content: #ffffff;
-  --color-warning: #d97706;
-  --color-warning-content: #1c1e26;
-  --color-error: #dc2626;
+  --color-warning: #e6a23c;
+  --color-warning-content: #26231f;
+  --color-error: #b3392f;
   --color-error-content: #ffffff;
 
-  --radius-box: 0.75rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 0.5rem;
+  --radius-box: 0.25rem;
+  --radius-field: 0.2rem;
+  --radius-selector: 0.2rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'editorial-dark';
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #1b1916;
+  --color-base-200: #23201c;
+  --color-base-300: #36312a;
+  --color-base-content: #ece6da;
+  --color-primary: #6fb8ae;
+  --color-primary-content: #10201e;
+  --color-secondary: #d1a086;
+  --color-secondary-content: #2a1c14;
+  --color-accent: #e0a37a;
+  --color-accent-content: #2a1c14;
+  --color-neutral: #cfc7b8;
+  --color-neutral-content: #1b1916;
+  --color-info: #6aa9c9;
+  --color-info-content: #0e1c24;
+  --color-success: #7fc29a;
+  --color-success-content: #0f2418;
+  --color-warning: #e8b25a;
+  --color-warning-content: #2a1d08;
+  --color-error: #ee7b70;
+  --color-error-content: #2b0e0b;
+
+  --radius-box: 0.25rem;
+  --radius-field: 0.2rem;
+  --radius-selector: 0.2rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'utilitarian-light';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #f1f3f5;
+  --color-base-300: #d5dbe1;
+  --color-base-content: #16191d;
+  --color-primary: #243447;
+  --color-primary-content: #f4f6f8;
+  --color-secondary: #475569;
+  --color-secondary-content: #ffffff;
+  --color-accent: #0f766e;
+  --color-accent-content: #ffffff;
+  --color-neutral: #1f2937;
+  --color-neutral-content: #f3f4f6;
+  --color-info: #0369a1;
+  --color-info-content: #ffffff;
+  --color-success: #15803d;
+  --color-success-content: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-content: #ffffff;
+  --color-error: #b91c1c;
+  --color-error-content: #ffffff;
+
+  --radius-box: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-selector: 0.125rem;
+  --size-selector: 0.2rem;
+  --size-field: 0.2rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'utilitarian-dark';
+  default: false;
+  prefersdark: false;
+  color-scheme: dark;
+
+  --color-base-100: #101316;
+  --color-base-200: #171b1f;
+  --color-base-300: #2a3139;
+  --color-base-content: #dde2e7;
+  --color-primary: #9fb3c8;
+  --color-primary-content: #0d141b;
+  --color-secondary: #94a3b8;
+  --color-secondary-content: #0d141b;
+  --color-accent: #5eead4;
+  --color-accent-content: #06201c;
+  --color-neutral: #cbd5e1;
+  --color-neutral-content: #101316;
+  --color-info: #38bdf8;
+  --color-info-content: #06202e;
+  --color-success: #4ade80;
+  --color-success-content: #062411;
+  --color-warning: #fbbf24;
+  --color-warning-content: #2b1c03;
+  --color-error: #f87171;
+  --color-error-content: #2b0b0b;
+
+  --radius-box: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-selector: 0.125rem;
+  --size-selector: 0.2rem;
+  --size-field: 0.2rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'friendly-light';
+  default: false;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: #ffffff;
+  --color-base-200: #fdf6ee;
+  --color-base-300: #f1e2d0;
+  --color-base-content: #3a3340;
+  --color-primary: #1fa396;
+  --color-primary-content: #ffffff;
+  --color-secondary: #ff8a6b;
+  --color-secondary-content: #3a1a10;
+  --color-accent: #8b7cf6;
+  --color-accent-content: #ffffff;
+  --color-neutral: #4a4458;
+  --color-neutral-content: #fdf6ee;
+  --color-info: #4aa3e0;
+  --color-info-content: #ffffff;
+  --color-success: #4cbf7a;
+  --color-success-content: #0d2a18;
+  --color-warning: #f2b134;
+  --color-warning-content: #3a2a06;
+  --color-error: #ef5b5b;
+  --color-error-content: #ffffff;
+
+  --radius-box: 1.25rem;
+  --radius-field: 0.9rem;
+  --radius-selector: 999px;
+  --size-selector: 0.27rem;
+  --size-field: 0.27rem;
   --border: 1px;
   --depth: 1;
   --noise: 0;
 }
 
 @plugin 'daisyui/theme' {
-  name: 'medidata-dark';
+  name: 'friendly-dark';
   default: false;
-  prefersdark: true;
+  prefersdark: false;
   color-scheme: dark;
 
-  --color-base-100: #14161f;
-  --color-base-200: #1b1e29;
-  --color-base-300: #262a38;
-  --color-base-content: #e5e7ee;
-  --color-primary: #60a5fa;
-  --color-primary-content: #0b1220;
-  --color-secondary: #2dd4bf;
-  --color-secondary-content: #0b1220;
-  --color-accent: #a78bfa;
-  --color-accent-content: #0b1220;
-  --color-neutral: #9ca3af;
-  --color-neutral-content: #14161f;
-  --color-info: #38bdf8;
-  --color-info-content: #0b1220;
-  --color-success: #4ade80;
-  --color-success-content: #0b1220;
-  --color-warning: #fbbf24;
-  --color-warning-content: #0b1220;
-  --color-error: #f87171;
-  --color-error-content: #0b1220;
+  --color-base-100: #1f1c27;
+  --color-base-200: #27232f;
+  --color-base-300: #393344;
+  --color-base-content: #f0ebf7;
+  --color-primary: #55d1c3;
+  --color-primary-content: #08211e;
+  --color-secondary: #ff9d82;
+  --color-secondary-content: #33150b;
+  --color-accent: #a89cf8;
+  --color-accent-content: #1a1445;
+  --color-neutral: #d9d2e6;
+  --color-neutral-content: #1f1c27;
+  --color-info: #6bb8ee;
+  --color-info-content: #082033;
+  --color-success: #6ad494;
+  --color-success-content: #07240f;
+  --color-warning: #f5c15a;
+  --color-warning-content: #33230a;
+  --color-error: #f47f7f;
+  --color-error-content: #33100f;
 
-  --radius-box: 0.75rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 0.5rem;
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
+  --radius-box: 1.25rem;
+  --radius-field: 0.9rem;
+  --radius-selector: 999px;
+  --size-selector: 0.27rem;
+  --size-field: 0.27rem;
   --border: 1px;
   --depth: 1;
   --noise: 0;
+}
+
+/* ---- Shared tokens -------------------------------------------------------- */
+
+:root {
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-display: var(--font-body);
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --icon-stroke: 2;
 }
 
 html,
@@ -84,4 +248,160 @@ body {
 
 body {
   margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+.card-title,
+.stat-value {
+  font-family: var(--font-display);
+}
+
+/* Numbers line up in tables, stats and vitals in every style. */
+.table,
+.stat-value,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Editorial: warm paper, serif headings, hairlines instead of shadows ----- */
+
+[data-style='editorial'] {
+  --font-display: 'Fraunces', Georgia, serif;
+  --icon-stroke: 1.5;
+}
+[data-style='editorial'] h1 {
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+[data-style='editorial'] h2,
+[data-style='editorial'] .card-title {
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+[data-style='editorial'] .stat-value {
+  font-weight: 400;
+}
+[data-style='editorial'] .btn {
+  font-weight: 500;
+}
+
+/* ---- Utilitarian: dense, monochrome, mono numerals ------------------------- */
+
+[data-style='utilitarian'] {
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans', system-ui, sans-serif;
+  --icon-stroke: 2;
+  font-size: 14px;
+}
+[data-style='utilitarian'] h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+[data-style='utilitarian'] .stat-value,
+[data-style='utilitarian'] .badge,
+[data-style='utilitarian'] .tabular {
+  font-family: var(--font-mono);
+}
+[data-style='utilitarian'] .table :where(th, td) {
+  padding: 0.35rem 0.7rem;
+}
+[data-style='utilitarian'] .table :where(th) {
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+}
+[data-style='utilitarian'] .card-body {
+  padding: 0.85rem 1rem;
+}
+[data-style='utilitarian'] .stat {
+  padding: 0.6rem 1rem;
+}
+[data-style='utilitarian'] .menu :where(li > a, li > button) {
+  padding-block: 0.3rem;
+}
+[data-style='utilitarian'] .btn:not(.btn-circle) {
+  font-weight: 500;
+}
+
+/* ---- Friendly: round, soft, a little bigger ------------------------------------ */
+
+[data-style='friendly'] {
+  --font-body: 'Nunito', system-ui, sans-serif;
+  --font-display: 'Nunito', system-ui, sans-serif;
+  --icon-stroke: 2.25;
+  font-size: 16.5px;
+}
+[data-style='friendly'] h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+}
+[data-style='friendly'] h2,
+[data-style='friendly'] .card-title {
+  font-weight: 700;
+}
+[data-style='friendly'] .btn,
+[data-style='friendly'] .input,
+[data-style='friendly'] .select {
+  font-weight: 700;
+}
+[data-style='friendly'] .btn:not(.btn-circle):not(.btn-square) {
+  border-radius: 999px;
+}
+[data-style='friendly'] .shadow {
+  box-shadow: 0 10px 28px -14px color-mix(in oklab, var(--color-primary) 45%, transparent);
+}
+
+/* ---- Flat styles replace the stock shadow with a hairline ----------------------- */
+
+[data-style='editorial'] .shadow,
+[data-style='utilitarian'] .shadow {
+  box-shadow: none;
+  border: 1px solid var(--color-base-300);
+}
+[data-style='editorial'] .menu-active,
+[data-style='utilitarian'] .menu-active {
+  box-shadow: none;
+}
+
+/* Login brand panel: bold accent in light mode, a quiet surface in dark mode. */
+.brand-panel {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+[data-theme$='-dark'] .brand-panel {
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  border-right: 1px solid var(--color-base-300);
+}
+[data-theme$='-dark'] .brand-panel h2 {
+  color: var(--color-primary);
+}
+
+/* Skeleton loading blocks (see SkeletonComponent). */
+.skeleton-block {
+  border-radius: var(--radius-field);
+  background: linear-gradient(90deg, var(--color-base-300) 25%, var(--color-base-200) 50%, var(--color-base-300) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-block { animation: none; }
 }

@@ -9,12 +9,13 @@ import { endNotBeforeStart, errorMessage } from '../../../forms/validators';
 import { findAllergyConflicts } from '../../../util/allergy-check';
 import { todayIso } from '../../../util/age';
 import { Suggestion, TypeaheadComponent } from '../../ui/typeahead.component';
+import { IconComponent } from '../../ui/icon.component';
 
 @Component({
   selector: 'app-medication-form',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TypeaheadComponent],
+  imports: [ReactiveFormsModule, TypeaheadComponent, IconComponent],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-2" aria-label="New medication">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-1">
@@ -54,7 +55,7 @@ import { Suggestion, TypeaheadComponent } from '../../ui/typeahead.component';
 
       @if (conflicts().length) {
         <div role="alert" class="alert alert-warning">
-          <span class="material-icons">warning</span>
+          <app-icon name="warning" />
           <div class="flex-1">
             <strong>Possible allergy conflict:</strong>
             @for (a of conflicts(); track a.id; let last = $last) {

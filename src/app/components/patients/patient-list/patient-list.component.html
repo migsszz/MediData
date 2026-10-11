@@ -2,25 +2,29 @@
   <h1 class="text-2xl font-bold">Patients</h1>
   @if (org.canWrite()) {
     <a class="btn btn-primary" routerLink="/patients/new">
-      <span class="material-icons text-lg">add</span>
+      <app-icon name="add" />
       Add patient
     </a>
   }
 </div>
 
 <label class="input mb-4 w-full max-w-xs">
-  <span class="material-icons text-base opacity-60">search</span>
+  <app-icon name="search" class="text-base opacity-60" />
   <input type="search" placeholder="Search by name" aria-label="Search patients by name" (input)="onSearchChange($any($event.target).value)" />
 </label>
 
 @if (patients.isPending()) {
-  <div class="flex justify-center py-12">
-    <span class="loading loading-spinner loading-lg"></span>
-  </div>
+  <app-skeleton-rows [count]="6" label="Loading patients" />
 } @else if (patients.isError()) {
   <div role="alert" class="alert alert-error">Couldn't load patients. {{ patients.error().message }}</div>
 } @else if (rows().length === 0) {
-  <p class="text-center text-base-content/60 py-12">No patients found.</p>
+  <div class="rounded-box border border-base-300 bg-base-100">
+    <app-empty-state icon="users" [title]="term() ? 'No patients match “' + term() + '”' : 'No patients yet'" [hint]="term() ? 'Check the spelling, or try fewer letters.' : 'Add your first patient to start recording visits.'">
+      @if (org.canWrite() && !term()) {
+        <a class="btn btn-primary btn-sm" routerLink="/patients/new"><app-icon name="add" />Add patient</a>
+      }
+    </app-empty-state>
+  </div>
 } @else {
   <div class="overflow-x-auto bg-base-100 rounded-box shadow">
     <table class="table">
@@ -49,11 +53,11 @@
                   title="Archive"
                   aria-label="Archive patient"
                 >
-                  <span class="material-icons text-lg">archive</span>
+                  <app-icon name="archive" />
                 </button>
               }
               <a class="btn btn-ghost btn-circle btn-sm" [routerLink]="['/patients', p.id]" title="Open chart" aria-label="Open chart">
-                <span class="material-icons text-lg">chevron_right</span>
+                <app-icon name="chevron_right" />
               </a>
             </td>
           </tr>

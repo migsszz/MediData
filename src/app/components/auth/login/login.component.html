@@ -1,14 +1,35 @@
-<div class="min-h-screen flex items-center justify-center bg-base-200 p-4">
-  <div class="card w-full max-w-sm bg-base-100 shadow-xl">
-    <div class="card-body">
-      <h1 class="text-2xl font-bold text-center">MediData</h1>
-      <p class="text-center text-sm text-base-content/60 mb-2">
-        {{ mode() === 'signin' ? 'Sign in to your account' : 'Create an account' }}
+<div class="min-h-screen grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] bg-base-100">
+  <!-- Brand panel -->
+  <aside class="brand-panel hidden lg:flex flex-col justify-between p-12">
+    <span class="flex items-center gap-2 text-2xl font-semibold font-[family-name:var(--font-display)]">
+      <app-icon name="heart_pulse" size="1.4em" />
+      MediData
+    </span>
+    <div class="max-w-md">
+      <h2 class="text-4xl font-semibold leading-tight font-[family-name:var(--font-display)]">Patient records that stay out of your way.</h2>
+      <ul class="mt-8 flex flex-col gap-4 opacity-90">
+        <li class="flex gap-3"><app-icon name="shield" class="mt-0.5" /><span>Each practice sees only its own patients, with roles and an audit trail behind every change.</span></li>
+        <li class="flex gap-3"><app-icon name="stethoscope" class="mt-0.5" /><span>Record a visit in under a minute, even when the connection drops.</span></li>
+        <li class="flex gap-3"><app-icon name="medication" class="mt-0.5" /><span>Allergies and active medications stay in view while you chart.</span></li>
+      </ul>
+    </div>
+    <p class="text-sm opacity-70">Demo data is private to your session and removed after 24 hours.</p>
+  </aside>
+
+  <main class="flex items-center justify-center p-6">
+    <div class="w-full max-w-sm">
+      <span class="lg:hidden mb-6 flex items-center justify-center gap-2 text-2xl font-semibold font-[family-name:var(--font-display)]">
+        <app-icon name="heart_pulse" class="text-primary" />
+        MediData
+      </span>
+      <h1 class="text-2xl font-bold">{{ mode() === 'signin' ? 'Welcome back' : 'Create your account' }}</h1>
+      <p class="text-sm text-base-content/60 mb-5">
+        {{ mode() === 'signin' ? 'Sign in to continue to your practice.' : 'Start with a personal workspace; invite colleagues later.' }}
       </p>
 
       @if (infoMessage()) {
-        <div class="alert alert-info mb-3 text-sm py-2">
-          <span class="material-icons text-lg">info</span>
+        <div class="alert alert-info mb-3 text-sm py-2" role="status">
+          <app-icon name="info" />
           <span>{{ infoMessage() }}</span>
         </div>
       }
@@ -31,10 +52,10 @@
         </fieldset>
 
         @if (errorMessage()) {
-          <p class="text-error text-sm -mt-1">{{ errorMessage() }}</p>
+          <p class="text-error text-sm -mt-1" role="alert">{{ errorMessage() }}</p>
         }
 
-        <button type="submit" class="btn btn-primary w-full" [disabled]="form.invalid || loading()">
+        <button type="submit" class="btn btn-primary w-full mt-1" [disabled]="form.invalid || loading()">
           @if (loading()) {
             <span class="loading loading-spinner loading-sm"></span>
           } @else {
@@ -53,9 +74,21 @@
         @if (demoLoading()) {
           <span class="loading loading-spinner loading-sm"></span>
         } @else {
-          Try the demo
+          Explore with sample data
         }
       </button>
+
+      <div class="mt-8 flex items-center justify-between gap-2 border-t border-base-300 pt-4 text-sm">
+        <span class="text-base-content/60">Style</span>
+        <div class="join" role="radiogroup" aria-label="Interface style">
+          @for (s of theme.styles; track s.id) {
+            <button type="button" role="radio" class="btn btn-sm join-item" [class.btn-active]="theme.style() === s.id" [attr.aria-checked]="theme.style() === s.id" (click)="theme.setStyle(s.id)">{{ s.label }}</button>
+          }
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm btn-circle" (click)="theme.toggle()" [attr.aria-label]="theme.mode() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+          <app-icon [name]="theme.mode() === 'dark' ? 'light_mode' : 'dark_mode'" />
+        </button>
+      </div>
     </div>
-  </div>
+  </main>
 </div>

@@ -43,8 +43,11 @@ test('patient search is done by the server and the chart shows safety banners', 
 
   await page.getByRole('row', { name: /Brown/ }).click();
   await expect(page.getByRole('heading', { name: 'Bob Brown' })).toBeVisible();
-  await expect(page.getByRole('alert').filter({ hasText: 'Penicillin' })).toContainText('Hives');
-  await expect(page.locator('.alert', { hasText: 'Active medications' })).toContainText('Lisinopril 10mg');
+  const rail = page.getByLabel('Patient safety summary');
+  await expect(rail).toContainText('Penicillin');
+  await expect(rail).toContainText('Hives');
+  await expect(rail).toContainText('Lisinopril');
+  await expect(rail).toContainText('10mg');
   await expect(page.getByLabel('Vitals trends')).toContainText('150/95');
 });
 
@@ -91,4 +94,14 @@ test('an encounter saved while offline syncs exactly once when the connection re
     p_vitals: { '8480-6': 120, '8462-4': 80 }
   });
   expect(call.p_id).toMatch(/^[0-9a-f-]{36}$/);
+});
+
+test('the vitals card flags an out-of-range reading and shades the typical range', async ({ page }) => {
+  await mockSupabase(page);
+  await signIn(page);
+  await page.goto(`/patients/${PATIENTS[1].id}`);
+  const card = page.getByLabel('Vitals trends');
+  await expect(card).toContainText('150/95');
+  await expect(card.getByText('High')).toBeVisible();
+  await expect(card.locator('svg rect')).toHaveCount(1); // the reference-range band
 });

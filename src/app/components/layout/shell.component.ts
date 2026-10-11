@@ -10,8 +10,10 @@ import { ThemeService } from '../../services/theme.service';
 import { IdleTimeoutService } from '../../services/idle-timeout.service';
 import { UpgradeAccountDialogComponent } from '../upgrade-account-dialog/upgrade-account-dialog.component';
 import { SyncPanelComponent } from './sync-panel.component';
+import { CommandPaletteComponent } from './command-palette.component';
 import { OfflineQueue } from '../../data/offline-queue';
 import { OrgService } from '../../data/org.service';
+import { IconComponent } from '../ui/icon.component';
 
 const SIDEBAR_COLLAPSED_KEY = 'medidata-sidebar-collapsed';
 
@@ -26,7 +28,7 @@ function getInitialCollapsed(): boolean {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, CdkTrapFocus],
+  imports: [IconComponent, RouterLink, RouterLinkActive, RouterOutlet, CdkTrapFocus],
   templateUrl: './shell.component.html'
 })
 export class ShellComponent implements OnInit, OnDestroy {
@@ -77,6 +79,19 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.idleTimeout.stop();
     await this.supabase.signOut();
     this.router.navigateByUrl('/login');
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKey(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      this.openPalette();
+    }
+  }
+
+  openPalette() {
+    if (this.dialog.openDialogs.some((d) => d.componentInstance instanceof CommandPaletteComponent)) return;
+    this.dialog.open(CommandPaletteComponent, { panelClass: 'palette-panel', autoFocus: 'input' });
   }
 
   openSyncPanel() {

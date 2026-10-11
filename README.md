@@ -53,6 +53,20 @@ e2e/                   Playwright smoke tests against a mocked Supabase
 
 `src/app/data/database.types.ts` is written by hand in the shape of `supabase gen types typescript`. Once you have a database, run `npm run gen:types` (needs `supabase start`) and fix whatever the compiler flags; the app-specific narrowing (e.g. `Sex`) lives in `src/app/models/`.
 
+## Look and feel
+
+Three switchable styles, each with light and dark, so six DaisyUI themes (`src/styles.css`). Pick one from the palette button in the header, on the login page, or with `Ctrl/⌘ K` then "Style: …". The choice is stored in `localStorage`.
+
+| Style | Feel | Type | Shape |
+| --- | --- | --- | --- |
+| **Editorial** (default) | Warm paper tones, deep teal accent, hairlines instead of shadows | Fraunces headings, Inter body | Squared, airy |
+| **Utilitarian** | Dense, cool monochrome, built for speed | IBM Plex Sans + Mono numerals, 14px base | Tight, flat, small radius |
+| **Friendly** | Soft peach and mint, rounded, a little larger | Nunito | Pill buttons, big radius, soft shadows |
+
+`ThemeService` sets `data-theme` (palette and control shape, `<style>-<mode>`) and `data-style` (fonts, density, icon weight, borders vs shadows) on `<html>`. To add a style: add its two `@plugin 'daisyui/theme'` blocks and a `[data-style='…']` section in `styles.css`, and an entry in `STYLES` in `theme.service.ts`. Chart colours are read from the active theme at runtime. Icons are inline Lucide SVGs (`components/ui/icons.ts`) whose stroke weight follows the style.
+
+Shared across all styles: a sticky safety rail on the patient chart (allergies, active medications, contact), vitals shaded against typical adult ranges with out-of-range flags (reference ranges only, not diagnostic: `models/vitals.ts`), skeleton loading and empty states, and a `Ctrl/⌘ K` command palette.
+
 ## Offline
 
 Encounters, medications and allergies can be recorded without a connection. They are saved to IndexedDB with a client-generated id and sent when the browser is back online (and on a 30s retry); the server treats a replayed id as already done, so a flaky connection can't create duplicates. The header shows a sync badge and a panel listing anything waiting or rejected.

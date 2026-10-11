@@ -7,11 +7,14 @@ import { OrgService } from '../../../data/org.service';
 import { cursorOf, keys } from '../../../data/queries';
 import { DeleteGuardService } from '../../../services/delete-guard.service';
 import type { Patient } from '../../../models/patient.model';
+import { IconComponent } from '../../ui/icon.component';
+import { EmptyStateComponent } from '../../ui/empty-state.component';
+import { SkeletonRowsComponent } from '../../ui/skeleton.component';
 
 @Component({
   selector: 'app-patient-list',
   standalone: true,
-  imports: [DatePipe, RouterLink],
+  imports: [IconComponent, EmptyStateComponent, SkeletonRowsComponent, DatePipe, RouterLink],
   templateUrl: './patient-list.component.html'
 })
 export class PatientListComponent {
