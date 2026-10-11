@@ -1,12 +1,13 @@
 -- Expires abandoned guest/demo accounts so they don't pile up forever.
--- Run this once in the Supabase SQL editor, after supabase/schema.sql
--- (it depends on created_by's ON DELETE CASCADE from that script).
+-- Run this once in the Supabase SQL editor, after the migrations in
+-- supabase/migrations/ have been applied (it calls expire_guest_workspaces()).
 --
 -- There's no client-side moment where a guest who closes the tab and never
 -- comes back triggers any cleanup, so this runs on a schedule via pg_cron
--- instead: every hour, delete anonymous auth.users rows older than 24
--- hours. Deleting the auth user cascades to their patients, which cascades
--- to those patients' encounters/medications — nothing else to clean up.
+-- instead: every hour, expire_guest_workspaces() deletes anonymous auth.users
+-- rows older than 24 hours, then deletes any demo organization left without
+-- members. Deleting the organization cascades to all of its patients,
+-- encounters, observations, allergies and medications.
 --
 -- Real (non-anonymous) accounts are never touched, regardless of age.
 --
@@ -29,11 +30,7 @@ where jobname = 'expire-guest-data';
 select cron.schedule(
   'expire-guest-data',
   '0 * * * *', -- hourly, on the hour
-  $$
-    delete from auth.users
-    where is_anonymous is true
-      and created_at < now() - interval '24 hours';
-  $$
+  $$ select public.expire_guest_workspaces(interval '24 hours'); $$
 );
 
 -- To change how long guest data is kept, re-run this file with a

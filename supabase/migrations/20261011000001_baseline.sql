@@ -1,3 +1,10 @@
+-- BASELINE (migration 1 of N).
+-- This is the original supabase/schema.sql, unchanged apart from this header.
+-- It is idempotent, so a project that already ran schema.sql can apply it
+-- again safely; later migrations build the organization/role model, audit
+-- log, structured clinical data and RPCs on top of it. Apply migrations in
+-- filename order (`supabase db push`, or `supabase db reset` locally).
+--
 -- MediData schema
 -- Run this in the Supabase SQL editor (Project > SQL Editor > New query).
 --
