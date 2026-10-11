@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sql:
+    name: Migrations + RLS tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v7
+      - name: Apply every migration to a fresh database and run the SQL tests
+        run: bash supabase/tests/run.sh
+
+  app:
+    name: Build, unit tests, end-to-end smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # The e2e tests intercept all traffic to this URL, so no real project is needed.
+      - name: Write test environment files
+        run: |
+          for f in src/environments/environment.ts src/environments/environment.prod.ts; do
+            printf "export const environment = { production: false, supabaseUrl: 'http://localhost:54321', supabaseAnonKey: 'test-anon-key' };\n" > "$f"
+          done
+
+      - run: npx ng build --configuration production
+      - name: Unit tests
+        run: npx ng test --watch=false --browsers=ChromeHeadlessCI
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end smoke tests
+        run: npx playwright test
+      - uses: actions/upload-artifact@v5
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
