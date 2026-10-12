@@ -69,6 +69,12 @@ Icons and the favicon (SVG that follows light/dark, plus `.ico`, Apple touch ico
 
 Shared across all styles: a sticky safety rail on the patient chart (allergies, active medications, contact), vitals shaded against typical adult ranges with out-of-range flags (reference ranges only, not diagnostic: `models/vitals.ts`), skeleton loading and empty states, and a `Ctrl/⌘ K` command palette.
 
+## Updates and caching
+
+The app is an installable PWA, so Angular's service worker serves a cached copy of the build. Left alone, that shows the *previous* version for a load or two after every deploy (and a hard reload only helps once). `UpdateService` fixes this: it checks for a new version at startup, every 30 minutes and when the tab regains focus. A new version is applied immediately if you haven't started interacting, otherwise a "new version is ready" banner offers a reload, so nothing is reloaded mid-typing. Unsynced offline work and encounter drafts survive the reload.
+
+If a browser is stuck on an old build from before this existed, open DevTools > Application > Service Workers > Unregister (and "Clear site data"), then reload once.
+
 ## Offline
 
 Encounters, medications and allergies can be recorded without a connection. They are saved to IndexedDB with a client-generated id and sent when the browser is back online (and on a 30s retry); the server treats a replayed id as already done, so a flaky connection can't create duplicates. The header shows a sync badge and a panel listing anything waiting or rejected.
