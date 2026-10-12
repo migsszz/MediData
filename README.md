@@ -65,6 +65,8 @@ Three switchable styles, each with light and dark, so six DaisyUI themes (`src/s
 
 `ThemeService` sets `data-theme` (palette and control shape, `<style>-<mode>`) and `data-style` (fonts, density, icon weight, borders vs shadows) on `<html>`. To add a style: add its two `@plugin 'daisyui/theme'` blocks and a `[data-style='…']` section in `styles.css`, and an entry in `STYLES` in `theme.service.ts`. Chart colours are read from the active theme at runtime. Icons are inline Lucide SVGs (`components/ui/icons.ts`) whose stroke weight follows the style.
 
+Icons and the favicon (SVG that follows light/dark, plus `.ico`, Apple touch icon, and `any`/`maskable` PWA icons) are generated from one design by `npm run icons` (`scripts/generate-icons.mjs`); edit the script and re-run it rather than editing the PNGs.
+
 Shared across all styles: a sticky safety rail on the patient chart (allergies, active medications, contact), vitals shaded against typical adult ranges with out-of-range flags (reference ranges only, not diagnostic: `models/vitals.ts`), skeleton loading and empty states, and a `Ctrl/⌘ K` command palette.
 
 ## Offline
